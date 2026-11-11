@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC-Werkbank – Was steckt in einem PC?</title>
+<style>
+:root{
+  --bg:#1b1e21; --bg2:#212529; --bg3:#272c31; --line:#343a40; --line2:#454c54;
+  --ink:#e8eae5; --mute:#9ba3a9; --acc:#f2c200; --acc-ink:#151515;
+  --ok:#43b97c; --bad:#e2574c;
+  --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --head: 60px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px),
+    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+  background-size:12px 12px,12px 12px,60px 60px,60px 60px;
+  color:var(--ink); font-family:var(--sans); font-size:17px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit}
+.mono{font-family:var(--mono)}
+
+/* ---------- Kopfzeile ---------- */
+header.bar{
+  height:var(--head); display:flex; align-items:center; gap:24px;
+  padding:0 20px; border-bottom:1px solid var(--line); background:var(--bg);
+  position:sticky; top:0; z-index:5;
+}
+.brand{display:flex; align-items:center; gap:12px; min-width:0}
+.brand .chip{width:22px;height:22px;border:2px solid var(--acc);position:relative;flex:none}
+.brand .chip::after{content:"";position:absolute;inset:4px;background:var(--acc)}
+.brand b{font-family:var(--mono); letter-spacing:.14em; font-size:15px}
+.brand small{display:block;font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav.tabs{display:flex; gap:0; margin-left:auto; border:1px solid var(--line2)}
+nav.tabs button{
+  background:transparent; border:0; border-right:1px solid var(--line2);
+  padding:9px 16px; font-family:var(--mono); font-size:13px; letter-spacing:.06em;
+  cursor:pointer; color:var(--mute); transition:background .15s,color .15s;
+}
+nav.tabs button:last-child{border-right:0}
+nav.tabs button .n{color:var(--acc); margin-right:8px}
+nav.tabs button:hover{color:var(--ink); background:var(--bg3)}
+nav.tabs button.active{background:var(--acc); color:var(--acc-ink)}
+nav.tabs button.active .n{color:var(--acc-ink)}
+
+/* ---------- Ansichten ---------- */
+.view{display:none}
+.view.active{display:grid}
+.split{grid-template-columns:minmax(0,1fr) 400px; height:calc(100vh - var(--head)); min-height:520px}
+.stage{display:flex; flex-direction:column; min-width:0; min-height:0; padding:14px 18px 12px}
+.stage-head,.stage-foot{display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-family:var(--mono); font-size:12px; color:var(--mute); letter-spacing:.06em}
+.stage-head{justify-content:space-between; margin-bottom:6px}
+.stage-foot{margin-top:6px; justify-content:space-between}
+.stage svg.scene{flex:1; width:100%; min-height:0; display:block; touch-action:manipulation}
+.crumb{display:flex; gap:10px; align-items:center}
+.crumb i{display:inline-block;width:8px;height:8px;background:var(--acc)}
+
+.progress{display:flex; align-items:center; gap:10px; color:var(--ink)}
+.leds{display:flex; gap:4px}
+.leds span{width:12px;height:12px;border:1px solid var(--line2);background:transparent;transition:background .25s,border-color .25s}
+.leds span.on{background:var(--acc);border-color:var(--acc)}
+
+.btn{
+  background:transparent; border:1px solid var(--line2); color:var(--ink);
+  font-family:var(--mono); font-size:13px; letter-spacing:.05em;
+  padding:8px 14px; cursor:pointer; transition:background .15s,border-color .15s,color .15s;
+}
+.btn:hover{border-color:var(--acc); color:var(--acc)}
+.btn.primary{background:var(--acc); border-color:var(--acc); color:var(--acc-ink)}
+.btn.primary:hover{background:#ffd61f; color:var(--acc-ink)}
+.btn:focus-visible,.part:focus-visible,.ans:focus-visible,nav.tabs button:focus-visible,.plist button:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
+
+/* ---------- Seitenpanel ---------- */
+aside.panel{
+  border-left:1px solid var(--line); background:var(--bg2);
+  overflow-y:auto; padding:22px 24px 28px; min-height:0;
+}
+.kicker{font-family:var(--mono); font-size:12px; letter-spacing:.12em; color:var(--acc); text-transform:uppercase}
+.panel h2{font-size:26px; line-height:1.2; margin:6px 0 12px; font-weight:700; letter-spacing:-.01em}
+.panel p{margin:0 0 12px}
+.panel .lead{color:var(--ink)}
+.panel .note{color:var(--mute); font-size:15px}
+.cut{border:0; border-top:1px dashed var(--line2); margin:18px 0}
+.pane{animation:pane .22s ease-out}
+@keyframes pane{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+.fig{
+  margin:6px 0 14px; padding:14px; position:relative;
+  border:1px solid var(--line2); background:#1a1d20;
+}
+.fig::before,.fig::after{content:"";position:absolute;width:10px;height:10px;border-color:var(--acc);border-style:solid}
+.fig::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.fig::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.fig svg{display:block; width:100%; height:auto; max-height:300px}
+.fig figcaption{font-family:var(--mono); font-size:11px; color:var(--mute); letter-spacing:.06em; margin-top:8px}
+
+dl.facts{margin:0}
+dl.facts dt{font-family:var(--mono); font-size:12px; letter-spacing:.12em; color:var(--acc); text-transform:uppercase; margin-top:14px}
+dl.facts dd{margin:3px 0 0; font-size:17px}
+dl.facts dd.like{border-left:3px solid var(--acc); padding-left:10px}
+
+.plist{list-style:none; margin:8px 0 0; padding:0; counter-reset:p}
+.plist li{border-bottom:1px solid var(--line)}
+.plist button{
+  width:100%; display:grid; grid-template-columns:18px 52px 1fr; gap:10px; align-items:center;
+  background:transparent; border:0; padding:9px 4px; text-align:left; cursor:pointer;
+  transition:background .15s;
+}
+.plist button:hover{background:var(--bg3)}
+.plist .box{width:14px;height:14px;border:1px solid var(--line2)}
+.plist .done .box{background:var(--acc); border-color:var(--acc)}
+.plist .ref{font-family:var(--mono); font-size:12px; color:var(--mute)}
+.plist .done .nm{color:var(--ink)}
+.plist .nm{color:var(--mute)}
+
+.legend{list-style:none; padding:0; margin:0 0 6px}
+.legend li{display:grid; grid-template-columns:26px 1fr; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); font-size:15px; cursor:default}
+.legend li b{font-weight:600}
+.legend .num{font-family:var(--mono); font-size:12px; width:22px; height:22px; display:grid; place-items:center; background:var(--acc); color:var(--acc-ink); font-weight:700}
+.legend li.hl{background:var(--bg3)}
+svg .mk circle{fill:var(--acc); stroke:#151515; stroke-width:.8}
+svg .mk text{fill:#151515; font-family:var(--mono); font-weight:700; font-size:10px}
+svg .mk.hl circle{fill:#fff}
+
+.callouts text{fill:var(--acc); font-family:var(--mono); font-size:6px; font-weight:700; stroke:#1a1d20; stroke-width:1.6px; paint-order:stroke}
+.callouts line,.callouts polyline{stroke:var(--acc); stroke-width:.45; fill:none}
+.callouts circle{fill:var(--acc)}
+
+.toast{
+  font-family:var(--mono); font-size:13px; padding:10px 12px; border:1px solid var(--acc);
+  color:var(--ink); background:#2a2810; margin:10px 0 0;
+}
+
+/* ---------- SVG-Szenen ---------- */
+.part{cursor:pointer; transition:opacity .18s ease; outline:none}
+.part .hit{fill:transparent; stroke:none; pointer-events:all}
+.part .ol{fill:none; stroke:var(--acc); stroke-width:2px; vector-effect:non-scaling-stroke; stroke-dasharray:6 4; opacity:0; transition:opacity .15s; pointer-events:none}
+.part.hot .ol,.part.sel .ol{opacity:1}
+.part.sel .ol{stroke-dasharray:none; stroke-width:2.5px}
+.part.locked,.part.locked *{pointer-events:none!important}
+#pc:not(.cooler-off) [data-part="cpu"]{visibility:hidden}
+.deco{pointer-events:none; transition:opacity .18s ease}
+.scene.hovering .part:not(.hot),.scene.hovering .deco{opacity:.32}
+.tag{pointer-events:none}
+.tag rect{fill:var(--acc)}
+.tag text{fill:#141414; font-family:var(--mono); font-weight:700}
+.tag .tick{stroke:var(--acc); stroke-width:1.4px; vector-effect:non-scaling-stroke}
+.cooler-anim{transition:opacity .35s ease, transform .35s ease; transform-box:fill-box; transform-origin:center}
+.scene.cooler-off .cooler-anim{opacity:0; transform:translate(0,-8px) scale(1.07); pointer-events:none}
+.tray{transition:transform .45s cubic-bezier(.3,.7,.2,1)}
+.tray.out{transform:translateX(-64px)}
+.psu-unit .led{transition:fill .2s}
+.psu-unit.failed .led{fill:#e2574c}
+.psu-unit.failed .body{fill:#3a2b2b}
+.psu-unit.failed .xmark{opacity:1}
+.psu-unit .xmark{opacity:0; transition:opacity .2s}
+
+.status{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
+.status .dot{display:inline-block;width:9px;height:9px;margin-right:6px;background:var(--ok);vertical-align:0}
+.status .dot.bad{background:var(--bad)}
+.status .run{color:var(--ink)}
+
+table.cmp{width:100%; border-collapse:collapse; font-size:15px; margin:4px 0 14px}
+table.cmp th,table.cmp td{text-align:left; padding:7px 6px; border-bottom:1px solid var(--line)}
+table.cmp th{font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--mute); font-weight:400; text-transform:uppercase}
+table.cmp td:last-child{color:var(--acc)}
+.big{font-size:19px; font-weight:600; border-left:3px solid var(--acc); padding-left:12px}
+
+/* ---------- Quiz ---------- */
+#view-quiz{place-items:start center; min-height:calc(100vh - var(--head)); padding:26px 18px 40px}
+.quiz{width:100%; max-width:900px}
+.q-head{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; font-family:var(--mono); font-size:13px; color:var(--mute); letter-spacing:.08em; padding-bottom:12px; border-bottom:1px solid var(--line)}
+.q-leds{display:flex; gap:5px}
+.q-leds span{width:22px; height:8px; background:var(--line); transition:background .25s}
+.q-leds span.cur{background:var(--acc)}
+.q-leds span.ok{background:var(--ok)}
+.q-leds span.bad{background:var(--bad)}
+.q-card{display:grid; grid-template-columns:minmax(0,1fr); gap:20px; padding-top:22px}
+.q-card.withfig{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.q-prompt{font-size:28px; line-height:1.25; font-weight:700; margin:6px 0 18px; letter-spacing:-.01em}
+.q-fig{margin:0; border:1px solid var(--line2); background:#1a1d20; padding:18px; display:grid; place-items:center; min-height:260px; position:relative}
+.q-fig::before{content:"BAUTEIL ?"; position:absolute; top:8px; left:10px; font-family:var(--mono); font-size:11px; color:var(--mute); letter-spacing:.1em}
+.q-fig svg{width:100%; height:auto; max-height:320px}
+.answers{display:grid; gap:10px}
+.ans{
+  display:grid; grid-template-columns:34px 1fr; gap:12px; align-items:center; text-align:left;
+  background:var(--bg2); border:1px solid var(--line2); padding:12px 14px; cursor:pointer; font-size:18px;
+  transition:border-color .15s, background .15s;
+}
+.ans .key{font-family:var(--mono); font-size:13px; width:28px; height:28px; display:grid; place-items:center; border:1px solid var(--line2); color:var(--mute)}
+.ans:hover:not(:disabled){border-color:var(--acc)}
+.ans:hover:not(:disabled) .key{border-color:var(--acc); color:var(--acc)}
+.ans:disabled{cursor:default}
+.ans.right{border-color:var(--ok); background:#1d3227}
+.ans.right .key{background:var(--ok); border-color:var(--ok); color:#0e1a13}
+.ans.wrong{border-color:var(--bad); background:#3a2222}
+.ans.wrong .key{background:var(--bad); border-color:var(--bad); color:#220c0a}
+.ans.dim{opacity:.5}
+.feedback{min-height:56px; margin-top:16px; font-size:17px}
+.feedback .verdict{font-family:var(--mono); font-weight:700; letter-spacing:.06em; margin-right:8px}
+.feedback .verdict.ok{color:var(--ok)}
+.feedback .verdict.bad{color:var(--bad)}
+.q-foot{display:flex; justify-content:flex-end; margin-top:8px}
+.result{padding-top:30px; text-align:left}
+.result .score{font-family:var(--mono); font-size:64px; line-height:1; color:var(--acc); margin:10px 0}
+.result .score small{font-size:24px; color:var(--mute)}
+.result .msg{font-size:20px; margin:12px 0 22px}
+.result ol{padding-left:0; list-style:none; margin:0 0 24px; border-top:1px solid var(--line)}
+.result li{display:grid; grid-template-columns:22px 1fr; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:15px}
+.result li i{display:inline-block; width:12px; height:12px; margin-top:6px}
+.result li i.ok{background:var(--ok)} .result li i.bad{background:var(--bad)}
+.result .actions{display:flex; gap:10px; flex-wrap:wrap}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1180px){ .split{grid-template-columns:minmax(0,1fr) 340px} .panel h2{font-size:23px} }
+@media (max-width:900px), (orientation:portrait) and (max-width:1100px){
+  .split{grid-template-columns:1fr; height:auto}
+  .stage svg.scene{height:62vh; flex:none}
+  aside.panel{border-left:0; border-top:1px solid var(--line); overflow:visible}
+  .q-card.withfig{grid-template-columns:1fr}
+  .brand small{display:none}
+}
+@media (max-width:620px){
+  nav.tabs button{padding:8px 9px; font-size:12px}
+  nav.tabs button .lbl-long{display:none}
+  .q-prompt{font-size:23px}
+}
+@media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important} }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <span class="chip" aria-hidden="true"></span>
+    <div><b>PC-WERKBANK</b><small>Schnupperlehre · Informatiker/in EFZ Plattformentwicklung</small></div>
+  </div>
+  <nav class="tabs" aria-label="Modus wählen">
+    <button data-view="discover" class="active"><span class="n">01</span>Entdecken</button>
+    <button data-view="quiz"><span class="n">02</span>Quiz</button>
+    <button data-view="server"><span class="n">03</span><span class="lbl-long">Und im </span>Server?</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===== Entdecken ===== -->
+  <section id="view-discover" class="view split active">
+    <div class="stage">
+      <div class="stage-head">
+        <span class="crumb"><i></i>ANSICHT: OFFENER PC · VON DER SEITE</span>
+        <span class="progress"><span class="leds" id="leds"></span><span id="progtxt">0 von 9 Teilen entdeckt</span></span>
+      </div>
+      <svg class="scene" id="pc" viewBox="-14 -14 488 494" role="img" aria-label="Offener PC von der Seite"></svg>
+      <div class="stage-foot">
+        <span id="pchint">Fahre über ein Teil. Klicke darauf, um mehr zu erfahren.</span>
+        <button class="btn" id="coolerBtn">Kühler abnehmen</button>
+      </div>
+    </div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </section>
+
+  <!-- ===== Quiz ===== -->
+  <section id="view-quiz" class="view">
+    <div class="quiz" id="quiz"></div>
+  </section>
+
+  <!-- ===== Server ===== -->
+  <section id="view-server" class="view split">
+    <div class="stage">
+      <div class="stage-head">
+        <span class="crumb"><i></i>ANSICHT: SERVER · VON OBEN, DECKEL OFFEN</span>
+        <span class="status" id="srvStatus"></span>
+      </div>
+      <svg class="scene" id="srv" viewBox="-84 -34 776 502" role="img" aria-label="Offener Server von oben"></svg>
+      <div class="stage-foot">
+        <span>Fahre über ein Teil. Klicke darauf, um mehr zu erfahren.</span>
+        <span>VORNE = Festplatten · HINTEN = Netzteile</span>
+      </div>
+    </div>
+    <aside class="panel" id="srvPanel" aria-live="polite"></aside>
+  </section>
+</main>
+
+<!-- gemeinsame Zeichnungen (Symbole) -->
+<svg id="lib" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"></svg>
+
+<script>
+"use strict";
+/* =====================================================================
+   Hilfen
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const MONO = "ui-monospace, SFMono-Regular, 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', monospace";
+const silk = (x, y, t, fs = 3, extra = "") =>
+  `<text x="${x}" y="${y}" fill="#e2e7dd" font-family="${MONO}" font-size="${fs}" ${extra}>${t}</text>`;
+function rng(seed){ return () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); }
+function blades(cx, cy, r, n, fill, stroke){
+  let s = `<g transform="translate(${cx} ${cy}) scale(${r})">`;
+  for (let i = 0; i < n; i++)
+    s += `<path d="M -0.07 -0.31 C 0.06 -0.52 0.21 -0.72 0.39 -0.86 L 0.21 -0.93 C 0.02 -0.85 -0.15 -0.63 -0.25 -0.29 Z" transform="rotate(${(360 / n * i).toFixed(2)})" fill="${fill}" stroke="${stroke}" stroke-width="${(0.5 / r).toFixed(4)}"/>`;
+  return s + `</g>`;
+}
+const PCB = "#1c4531", PCB2 = "#2d6c4c";
+
+/* =====================================================================
+   Gemeinsame Muster / Verläufe
+   ===================================================================== */
+const DEFS = `
+<defs>
+  <pattern id="pGold" width="0.85" height="40" patternUnits="userSpaceOnUse"><rect x="0.13" width="0.58" height="40" fill="#d8ae3c"/></pattern>
+  <pattern id="pGoldH" width="40" height="0.62" patternUnits="userSpaceOnUse"><rect y="0.1" width="40" height="0.42" fill="#d8ae3c"/></pattern>
+  <pattern id="pLga" width="1.15" height="1.15" patternUnits="userSpaceOnUse"><circle cx=".575" cy=".575" r=".3" fill="#caa245"/></pattern>
+  <pattern id="pFinV" width="1.6" height="40" patternUnits="userSpaceOnUse"><rect width="0.55" height="40" fill="#c5ccd2"/></pattern>
+  <pattern id="pFinH" width="40" height="2" patternUnits="userSpaceOnUse"><rect width="40" height="0.65" fill="#b7bec4"/></pattern>
+  <pattern id="pPerf" width="3" height="3" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r=".95" fill="#121416"/></pattern>
+  <pattern id="pGroove" width="40" height="3.2" patternUnits="userSpaceOnUse"><rect width="40" height="1.1" fill="#1a1d21"/></pattern>
+  <pattern id="pGrooveV" width="3.2" height="40" patternUnits="userSpaceOnUse"><rect width="1.1" height="40" fill="#1a1d21"/></pattern>
+  <linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#dfe3e6"/><stop offset=".55" stop-color="#b1b8be"/><stop offset="1" stop-color="#8e959c"/>
+  </linearGradient>
+  <linearGradient id="gIhs" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#e3e6e9"/><stop offset=".5" stop-color="#c2c8cd"/><stop offset="1" stop-color="#a1a8af"/>
+  </linearGradient>
+  <linearGradient id="gHdd" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#bfc4c9"/><stop offset="1" stop-color="#a3a9af"/>
+  </linearGradient>
+  <radialGradient id="gPlatter" cx=".42" cy=".38" r=".75">
+    <stop offset="0" stop-color="#f3f5f7"/><stop offset=".55" stop-color="#bcc4cb"/><stop offset="1" stop-color="#858f98"/>
+  </radialGradient>
+  <linearGradient id="gCopper" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#e09a68"/><stop offset="1" stop-color="#a85f34"/>
+  </linearGradient>
+  <clipPath id="cpCoolerSq"><rect x="0" y="0" width="96" height="96" rx="6"/></clipPath>
+  <filter id="lift" x="-15%" y="-15%" width="140%" height="140%">
+    <feDropShadow dx="1.2" dy="1.8" stdDeviation="1.3" flood-color="#000" flood-opacity=".55"/>
+  </filter>
+</defs>`;
+
+/* =====================================================================
+   Zeichnungen der Bauteile (Masse in Millimeter)
+   ===================================================================== */
+const ART = {};
+
+/* ---------- Arbeitsspeicher (DIMM, 133.35 × 31.25 mm) ---------- */
+ART.ram = { vb: [0, 0, 133.35, 31.25], svg: (() => {
+  const chips = [5, 19, 33, 47, 77.5, 91.5, 105.5, 119.5];
+  let s = `<path d="M0 0H133.35V15.5A2 2 0 0 0 133.35 19.5V31.25H73.6V27.1H71.6V31.25H0V19.5A2 2 0 0 0 0 15.5Z" fill="#1d4a34" stroke="#0e2a1c" stroke-width=".3"/>`;
+  for (let i = 0; i < 35; i++){ const x = 3 + i * 3.75; if (x > 70 && x < 75) continue;
+    s += `<line x1="${x.toFixed(2)}" y1="20.4" x2="${x.toFixed(2)}" y2="27.2" stroke="${PCB2}" stroke-width=".3"/>`; }
+  s += `<rect x="2.2" y="27.4" width="69" height="3.6" fill="url(#pGold)"/><rect x="74.1" y="27.4" width="57" height="3.6" fill="url(#pGold)"/>`;
+  chips.forEach(x => {
+    s += `<rect x="${x}" y="7.4" width="9.5" height="11.6" rx=".4" fill="#141618" stroke="#2c3036" stroke-width=".25"/>
+          <circle cx="${x + 1.2}" cy="8.7" r=".38" fill="#3b4046"/>
+          <rect x="${x + 1}" y="20.8" width="1.6" height=".9" fill="#b9a37a"/><rect x="${x + 4}" y="20.8" width="1.6" height=".9" fill="#b9a37a"/><rect x="${x + 7}" y="20.8" width="1.6" height=".9" fill="#3a3a3a"/>`;
+  });
+  s += `<rect x="61" y="9.4" width="7.2" height="7.2" rx=".3" fill="#141618" stroke="#2c3036" stroke-width=".25"/>
+        <rect x="61.6" y="20.4" width="4.2" height="2.4" fill="#141618"/>
+        <rect x="57.6" y="1.6" width="14" height="4.4" fill="#e8e5dc"/>`;
+  for (let i = 0; i < 18; i++) s += `<rect x="${(58.4 + i * 0.68).toFixed(2)}" y="2.2" width="${i % 3 ? .3 : .5}" height="3.2" fill="#222"/>`;
+  s += silk(2.4, 4.6, "WB-MEM", 2.6) + silk(124, 4.6, "1R", 2.2);
+  return s; })() };
+
+/* ---------- M.2-SSD (Format 2280 = 22 × 80 mm) ---------- */
+ART.ssd = { vb: [0, 0, 80, 22], svg: `
+  <path d="M0 0H80V9.25A1.75 1.75 0 0 0 80 12.75V22H0V16.8H4.2V15.6H0Z" fill="#173a28" stroke="#0c2116" stroke-width=".25"/>
+  <rect x=".3" y=".8" width="3.4" height="14.2" fill="url(#pGoldH)"/>
+  <rect x=".3" y="17.3" width="3.4" height="3.9" fill="url(#pGoldH)"/>
+  <rect x="7.5" y="4.5" width="12" height="13" rx=".4" fill="#141618" stroke="#2c3036" stroke-width=".25"/>
+  <circle cx="8.9" cy="5.9" r=".4" fill="#3b4046"/>
+  ${silk(9, 12, "CTRL", 2.2, `fill-opacity=".55"`)}
+  <rect x="22.5" y="6" width="8.5" height="10" rx=".3" fill="#141618" stroke="#2c3036" stroke-width=".25"/>
+  <rect x="34" y="3.2" width="17.5" height="15.6" rx=".4" fill="#141618" stroke="#2c3036" stroke-width=".25"/>
+  <rect x="54" y="3.2" width="17.5" height="15.6" rx=".4" fill="#141618" stroke="#2c3036" stroke-width=".25"/>
+  ${silk(36, 12, "NAND", 2.4, `fill-opacity=".45"`)}${silk(56, 12, "NAND", 2.4, `fill-opacity=".45"`)}
+  <rect x="5" y="1.2" width="1.4" height=".8" fill="#b9a37a"/><rect x="21" y="18.6" width="1.4" height=".8" fill="#b9a37a"/>
+  <rect x="31.8" y="4" width=".8" height="1.4" fill="#3a3a3a"/><rect x="31.8" y="16" width=".8" height="1.4" fill="#3a3a3a"/>
+  ${silk(73.2, 3.6, "2280", 2)}
+  <circle cx="80" cy="11" r="2.6" fill="none" stroke="#c9a85a" stroke-width=".5"/>` };
+
+/* ---------- Prozessor (40 × 40 mm, Metalldeckel) ---------- */
+ART.cpu = { vb: [0, 0, 40, 40], svg: (() => {
+  let s = `<rect x="0" y="0" width="40" height="40" rx=".8" fill="#2c5a39" stroke="#173322" stroke-width=".3"/>`;
+  for (let i = 0; i < 9; i++){ s += `<rect x="${4.5 + i * 3.6}" y="1" width="1.1" height=".7" fill="#b7a06e"/><rect x="${4.5 + i * 3.6}" y="38.3" width="1.1" height=".7" fill="#b7a06e"/>`; }
+  s += `<path d="M1.1 1.1H4.6L1.1 4.6Z" fill="#d8ae3c"/>
+        <rect x="3.2" y="3.2" width="33.6" height="33.6" rx="2.2" fill="url(#gIhs)" stroke="#8a9198" stroke-width=".3"/>
+        <rect x="4.4" y="4.4" width="31.2" height="31.2" rx="1.6" fill="none" stroke="#ffffff" stroke-opacity=".35" stroke-width=".25"/>
+        <text x="7" y="12" font-family="${MONO}" font-size="2.6" fill="#454b51" letter-spacing=".2">WERKBANK</text>
+        <text x="7" y="17.6" font-family="${MONO}" font-size="4.2" font-weight="700" fill="#33383d">WB-8700</text>
+        <text x="7" y="22.4" font-family="${MONO}" font-size="2.6" fill="#454b51">8 KERNE</text>
+        <text x="7" y="31" font-family="${MONO}" font-size="2.1" fill="#5a6066">LOT 26-11</text>`;
+  const r = rng(7);
+  for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) if (r() > .48 || x === 0 || y === 6)
+    s += `<rect x="${26 + x * .9}" y="${25 + y * .9}" width=".9" height=".9" fill="#4a5056"/>`;
+  return s; })() };
+
+/* ---------- CPU-Kühler von oben (96 × 96 mm) ---------- */
+ART.coolerTop = { vb: [0, 0, 96, 96], svg: (() => {
+  let s = `<rect x="0" y="0" width="96" height="96" rx="6" fill="#7d868d"/><g clip-path="url(#cpCoolerSq)">`;
+  for (let a = 0; a < 360; a += 3.6){ const t = a * Math.PI / 180;
+    s += `<line x1="48" y1="48" x2="${(48 + 70 * Math.cos(t)).toFixed(2)}" y2="${(48 + 70 * Math.sin(t)).toFixed(2)}" stroke="#c6cdd3" stroke-width=".7"/>`; }
+  s += `</g><rect x="0" y="0" width="96" height="96" rx="6" fill="none" stroke="#5d656c" stroke-width=".8"/>
+        <circle cx="48" cy="48" r="46" fill="#1c1f22" stroke="#3c4248" stroke-width=".8"/>
+        <circle cx="48" cy="48" r="42.5" fill="#0f1113"/>
+        ${blades(48, 48, 41.5, 7, "#2b2f34", "#4b5259")}
+        <circle cx="48" cy="48" r="13" fill="#202428" stroke="#3c4248" stroke-width=".6"/>
+        <circle cx="48" cy="48" r="10" fill="#2a2f34"/>
+        <text x="48" y="50.2" text-anchor="middle" font-family="${MONO}" font-size="6" font-weight="700" fill="#c9ced3">WB</text>`;
+  return s; })() };
+
+/* ---------- CPU-Kühler Detail: von oben + von der Seite ---------- */
+ART.cooler = { vb: [0, 0, 292, 122], svg: `
+  ${silk(4, 7, "VON OBEN", 6, `fill="#9ba3a9"`)}
+  <svg x="4" y="12" width="96" height="96" viewBox="0 0 96 96">${ART.coolerTop.svg}</svg>
+  ${silk(124, 7, "VON DER SEITE", 6, `fill="#9ba3a9"`)}
+  <rect x="132" y="14" width="96" height="20" rx="1.5" fill="#1c1f22" stroke="#3c4248" stroke-width=".6"/>
+  <rect x="138" y="19" width="84" height="10" fill="#0f1113"/>
+  <path d="M146 20 l6 8 M160 20 l6 8 M174 20 l6 8 M188 20 l6 8 M202 20 l6 8" stroke="#3b4148" stroke-width="1.6"/>
+  <rect x="172" y="20" width="16" height="8" fill="#202428"/>
+  <rect x="128" y="34" width="104" height="58" fill="#646d74"/>
+  <rect x="128" y="34" width="104" height="58" fill="url(#pFinV)"/>
+  <path d="M166 92 C166 70 150 66 140 40" stroke="url(#gCopper)" stroke-width="3.2" fill="none"/>
+  <path d="M180 92 V40" stroke="url(#gCopper)" stroke-width="3.2" fill="none"/>
+  <path d="M194 92 C194 70 210 66 220 40" stroke="url(#gCopper)" stroke-width="3.2" fill="none"/>
+  <rect x="155" y="92" width="50" height="7.5" fill="url(#gCopper)" stroke="#8d4f2c" stroke-width=".4"/>
+  <rect x="158" y="99.5" width="44" height="1.6" fill="#c7cacd"/>
+  <rect x="160" y="101.1" width="40" height="5" fill="none" stroke="#9ba3a9" stroke-width=".5" stroke-dasharray="1.6 1"/>
+  <path d="M224 24H234M228 63H236M201 100.3L210 108" stroke="#f2c200" stroke-width=".5" fill="none"/>
+  ${silk(235.5, 26.4, "Lüfter", 7, `fill="#f2c200" font-weight="700"`)}
+  ${silk(237.5, 65.4, "Lamellen", 7, `fill="#f2c200" font-weight="700"`)}
+  ${silk(211, 113, "Wärmeleitpaste", 7, `fill="#f2c200" font-weight="700"`)}
+  ${silk(160, 120, "Prozessor", 6, `fill="#9ba3a9"`)}` };
+
+/* ---------- Festplatte 3,5 Zoll (147 × 101.6 mm) ---------- */
+const hddScrews = [[4, 4], [143, 4], [4, 97.6], [143, 97.6], [73, 4], [73, 97.6]];
+const screw = (x, y, r = 1.6) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#868d94" stroke="#5f666d" stroke-width=".3"/><path d="M${x - r * .55} ${y}h${r * 1.1}M${x} ${y - r * .55}v${r * 1.1}" stroke="#4a5056" stroke-width=".35"/>`;
+ART.hdd = { vb: [0, 0, 147, 101.6], svg: (() => {
+  let s = `<rect x="0" y="0" width="147" height="101.6" rx="2.2" fill="#8f959b" stroke="#62686f" stroke-width=".5"/>
+    <path d="M3 3H140A4 4 0 0 1 144 7V94.6A4 4 0 0 1 140 98.6H3Z" fill="url(#gHdd)" stroke="#7c838a" stroke-width=".4"/>
+    <circle cx="93" cy="50.8" r="45" fill="none" stroke="#a0a6ac" stroke-width="1.6"/>
+    <circle cx="93" cy="50.8" r="45" fill="none" stroke="#d3d7da" stroke-width=".5" transform="translate(.6 .6)"/>
+    <circle cx="93" cy="50.8" r="6" fill="#aeb4b9" stroke="#80878e" stroke-width=".4"/>
+    ${screw(93, 50.8, 1.8)}${screw(29, 76, 1.5)}
+    <rect x="7" y="8" width="56" height="85.6" rx="1" fill="#e7e4db"/>
+    <text x="11" y="18" font-family="${MONO}" font-size="5.4" font-weight="700" fill="#222">WB-4000</text>
+    <text x="11" y="25" font-family="${MONO}" font-size="3.4" fill="#333">3,5 Zoll · SATA</text>
+    <rect x="11" y="29" width="44" height=".5" fill="#555"/>`;
+  for (let i = 0; i < 7; i++) s += `<rect x="11" y="${33 + i * 4}" width="${[38, 30, 42, 26, 36, 20, 33][i]}" height="1.3" fill="#9c9a94"/>`;
+  for (let i = 0; i < 34; i++) s += `<rect x="${11 + i * 1.3}" y="66" width="${i % 4 === 0 ? .8 : .45}" height="9" fill="#222"/>`;
+  s += `<rect x="11" y="80" width="10" height="10" fill="none" stroke="#333" stroke-width=".5"/><path d="M13 86l2.5 2 4-6" stroke="#333" stroke-width=".7" fill="none"/>`;
+  s += silk(25, 86, "MADE FOR LEARNING", 2.4, `fill="#555"`);
+  hddScrews.forEach(([x, y]) => s += screw(x, y));
+  return s; })() };
+
+ART.hddOpen = { vb: [0, 0, 147, 101.6], svg: (() => {
+  let s = `<rect x="0" y="0" width="147" height="101.6" rx="2.2" fill="#8f959b" stroke="#62686f" stroke-width=".5"/>
+    <path d="M5 5H138A4 4 0 0 1 142 9V92.6A4 4 0 0 1 138 96.6H5Z" fill="#646b72"/>
+    <circle cx="93" cy="50.8" r="48" fill="#4f565c"/>
+    <circle cx="93" cy="50.8" r="47" fill="url(#gPlatter)" stroke="#7a838b" stroke-width=".4"/>
+    <g>
+      <path d="M93 50.8 L140 44 A47 47 0 0 1 136 72 Z" fill="#ffffff" opacity=".18"/>
+      <path d="M93 50.8 L46 57 A47 47 0 0 1 50 30 Z" fill="#ffffff" opacity=".12"/>
+      <animateTransform attributeName="transform" type="rotate" from="0 93 50.8" to="360 93 50.8" dur="1.6s" repeatCount="indefinite"/>
+    </g>
+    <circle cx="93" cy="50.8" r="20" fill="none" stroke="#ffffff" stroke-opacity=".12" stroke-width=".4"/>
+    <circle cx="93" cy="50.8" r="12" fill="#c3c8cd" stroke="#848b92" stroke-width=".5"/>`;
+  for (let i = 0; i < 6; i++){ const t = i * Math.PI / 3; s += `<circle cx="${(93 + 8 * Math.cos(t)).toFixed(2)}" cy="${(50.8 + 8 * Math.sin(t)).toFixed(2)}" r="1" fill="#7b828a"/>`; }
+  s += `<circle cx="93" cy="50.8" r="2.4" fill="#9aa1a8"/>
+    <path d="M44 16 L52 18 L50 27 L43 25Z" fill="#202326"/>
+    <rect x="4" y="66" width="28" height="28" rx="2" fill="#41474d" stroke="#2c3135" stroke-width=".4"/>
+    <path d="M7 100 C14 94 6 80 16 70" stroke="#c98a2a" stroke-width="3" fill="none"/>
+    <g>
+      <path d="M17 88 L24 70 L33 70 L36 88 Z" fill="#b8793e" stroke="#7a4b22" stroke-width=".4"/>
+      <path d="M24 71 L69 33.5 L72.5 37 L33 80 Z" fill="#b5bbc1" stroke="#7d848b" stroke-width=".5"/>
+      <path d="M27 72 L66 38" stroke="#8f969d" stroke-width=".8"/>
+      <rect x="68.5" y="32.5" width="5.5" height="3.6" rx=".6" transform="rotate(-42 71 34)" fill="#2b2f33"/>
+      <circle cx="29" cy="76" r="7" fill="#9aa1a8" stroke="#6b7279" stroke-width=".5"/>
+      <circle cx="29" cy="76" r="2.4" fill="#5c636a"/>
+      <animateTransform attributeName="transform" type="rotate" values="0 29 76; -7 29 76; 4 29 76; -2 29 76; 0 29 76" dur="3.2s" repeatCount="indefinite"/>
+    </g>`;
+  hddScrews.forEach(([x, y]) => s += screw(x, y));
+  return s; })() };
+
+/* ---------- Netzteil: Lüfterseite + Kabelbündel ---------- */
+ART.psu = { vb: [0, 0, 244, 150], svg: (() => {
+  let s = `<rect x="0" y="5" width="150" height="140" rx="2.5" fill="#2a2e32" stroke="#4a5056" stroke-width=".8"/>
+    <rect x="3" y="8" width="144" height="134" rx="1.5" fill="none" stroke="#3a4046" stroke-width=".5"/>
+    <circle cx="75" cy="75" r="62" fill="#111315"/>
+    ${blades(75, 75, 58, 7, "#1e2125", "#30353b")}
+    <circle cx="75" cy="75" r="12" fill="#1f2226"/>`;
+  [12, 21, 30, 39, 48, 56, 62].forEach(r => s += `<circle cx="75" cy="75" r="${r}" fill="none" stroke="#9aa2a9" stroke-width="1.1"/>`);
+  for (let i = 0; i < 8; i++){ const t = i * Math.PI / 4;
+    s += `<line x1="${(75 + 12 * Math.cos(t)).toFixed(2)}" y1="${(75 + 12 * Math.sin(t)).toFixed(2)}" x2="${(75 + 62 * Math.cos(t)).toFixed(2)}" y2="${(75 + 62 * Math.sin(t)).toFixed(2)}" stroke="#9aa2a9" stroke-width="1.1"/>`; }
+  s += `<circle cx="75" cy="75" r="9" fill="#2a2e33"/><text x="75" y="77.2" text-anchor="middle" font-family="${MONO}" font-size="5.6" font-weight="700" fill="#c9ced3">WB</text>`;
+  [[7, 12], [143, 12], [7, 138], [143, 138]].forEach(([x, y]) => s += screw(x, y, 2.2));
+  // Kabel
+  const cab = [[100, 19, 20], [104, 45, 8], [108, 65, 8], [112, 87, 5], [116, 107, 5], [120, 127, 5]];
+  cab.forEach(([sy, ty, w]) => {
+    s += `<path d="M150 ${sy} C176 ${sy} 172 ${ty} 194 ${ty}" stroke="#101214" stroke-width="${w}" fill="none"/>
+          <path d="M150 ${sy} C176 ${sy} 172 ${ty} 194 ${ty}" stroke="#2c3137" stroke-width="${w}" stroke-dasharray=".8 1.2" fill="none" opacity=".7"/>`;
+  });
+  s += `<rect x="146" y="94" width="8" height="32" rx="3" fill="#0b0c0e"/>`;
+  // Stecker
+  s += `<rect x="194" y="11" width="34" height="16" rx="1" fill="#121416" stroke="#30353b" stroke-width=".5"/>`;
+  for (let i = 0; i < 12; i++) for (let j = 0; j < 2; j++) s += `<rect x="${195.6 + i * 2.65}" y="${12.8 + j * 6.6}" width="2" height="5.4" fill="#050607"/>`;
+  s += `<rect x="194" y="40" width="20" height="10" rx="1" fill="#121416" stroke="#30353b" stroke-width=".5"/>`;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) s += `<rect x="${195.4 + i * 4.6}" y="${41.2 + j * 4.2}" width="3.6" height="3.4" fill="#050607"/>`;
+  s += `<rect x="194" y="60" width="20" height="10" rx="1" fill="#121416" stroke="#30353b" stroke-width=".5"/>`;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) s += `<rect x="${195.4 + i * 4.6}" y="${61.2 + j * 4.2}" width="3.6" height="3.4" fill="#050607"/>`;
+  [87, 107, 127].forEach(y => s += `<path d="M194 ${y - 3}H220V${y + 3}H198L194 ${y + 1}Z" fill="#121416" stroke="#30353b" stroke-width=".5"/>`);
+  s += silk(194, 8, "24-PIN", 4.6, `fill="#9ba3a9"`) + silk(217, 48, "CPU", 4.6, `fill="#9ba3a9"`) + silk(217, 68, "GPU", 4.6, `fill="#9ba3a9"`) + silk(223, 89, "SATA", 4.6, `fill="#9ba3a9"`);
+  return s; })() };
+
+/* ---------- Grafikkarte: Lüfterseite + Blech von hinten ---------- */
+ART.gpu = { vb: [-56, -8, 352, 146], svg: (() => {
+  let s = ``;
+  // Blech von hinten
+  s += `<rect x="-52" y="0" width="38" height="121" fill="url(#gMetal)" stroke="#7c848b" stroke-width=".4"/>
+        <rect x="-52" y="-4" width="38" height="5" fill="#a9b0b6" stroke="#7c848b" stroke-width=".4"/>
+        <rect x="-36" y="-3.4" width="6" height="3.6" rx="1.8" fill="#5b6268"/>`;
+  for (let i = 0; i < 9; i++) s += `<rect x="-47" y="${8 + i * 5}" width="28" height="2" rx="1" fill="#4a5157" transform="skewY(0)"/>`;
+  [62, 74, 86].forEach(y => s += `<path d="M-41 ${y}H-25V${y + 5}H-39L-41 ${y + 3}Z" fill="#141618" stroke="#2c3036" stroke-width=".4"/><rect x="-39.5" y="${y + 1.5}" width="13" height="2" fill="#3b4046"/>`);
+  s += `<path d="M-40 98H-26V101.2L-28 103H-38L-40 101.2Z" fill="#141618" stroke="#2c3036" stroke-width=".4"/><rect x="-38.5" y="99.2" width="11" height="1.8" fill="#3b4046"/>`;
+  s += silk(-52, 131, "BLECH", 4.2, `fill="#9ba3a9"`) + silk(-52, 136.5, "von hinten", 3.4, `fill="#9ba3a9"`);
+  s += silk(-24, 67, "DP", 2.6, `fill="#30353a"`) + silk(-24, 79, "DP", 2.6, `fill="#30353a"`) + silk(-24, 91, "DP", 2.6, `fill="#30353a"`) + silk(-25, 102.6, "HDMI", 2.4, `fill="#30353a"`);
+  // Karte
+  s += `<rect x="-2" y="-4" width="3.2" height="125" fill="url(#gMetal)" stroke="#7c848b" stroke-width=".3"/>
+        <path d="M1 106H280V112H107.5V120H32V116H30.2V120H18.5V112H1Z" fill="#1d4a34" stroke="#0e2a1c" stroke-width=".3"/>
+        <rect x="19" y="113" width="11" height="6.6" fill="url(#pGold)"/><rect x="32.4" y="113" width="74.6" height="6.6" fill="url(#pGold)"/>
+        <path d="M1 3H284L290 9V100L284 108H1Z" fill="#2a2e33" stroke="#4a5159" stroke-width=".6"/>
+        <path d="M6 8H120L128 14H280" stroke="#8d959d" stroke-width=".8" fill="none"/>
+        <path d="M6 103H180L188 97H284" stroke="#8d959d" stroke-width=".8" fill="none"/>`;
+  [52, 145, 238].forEach(cx => {
+    s += `<circle cx="${cx}" cy="55.5" r="44" fill="#141618" stroke="#3a4047" stroke-width=".7"/>
+          ${blades(cx, 55.5, 41.5, 9, "#30353b", "#535a62")}
+          <circle cx="${cx}" cy="55.5" r="12.5" fill="#22262a" stroke="#454c53" stroke-width=".6"/>
+          <circle cx="${cx}" cy="55.5" r="8.5" fill="#2c3136"/>
+          <text x="${cx}" y="57.5" text-anchor="middle" font-family="${MONO}" font-size="5.2" font-weight="700" fill="#c9ced3">WB</text>`;
+  });
+  s += `<rect x="226" y="-3.5" width="20" height="7" rx=".8" fill="#121416" stroke="#30353b" stroke-width=".4"/>`;
+  for (let i = 0; i < 4; i++) s += `<rect x="${227.4 + i * 4.6}" y="-2.4" width="3.4" height="2.2" fill="#050607"/>`;
+  s += silk(18, 126.5, "PCIe-Kontakt", 3.4, `fill="#9ba3a9"`);
+  return s; })() };
+
+/* ---------- Netzwerkkarte: PCIe x1 + Blech mit RJ45 ---------- */
+ART.nic = { vb: [-44, -6, 172, 98], svg: (() => {
+  let s = `<rect x="-40" y="-2" width="18" height="92" fill="url(#gMetal)" stroke="#7c848b" stroke-width=".4"/>
+    <rect x="-40" y="-5" width="18" height="4" fill="#a9b0b6" stroke="#7c848b" stroke-width=".4"/>
+    <path d="M-37.4 22H-24.6V34H-28.6V36.4H-33.4V34H-37.4Z" fill="#0f1113" stroke="#2c3036" stroke-width=".4"/>
+    <rect x="-36.6" y="23" width="11.4" height="2" fill="#c9a85a"/>
+    <rect x="-37" y="17.5" width="3" height="2.4" fill="#43b97c"/><rect x="-28" y="17.5" width="3" height="2.4" fill="#e0a43a"/>`;
+  for (let i = 0; i < 6; i++) s += `<rect x="-36" y="${46 + i * 6}" width="10" height="2" rx="1" fill="#4a5157"/>`;
+  s += `<text x="-31" y="96" text-anchor="middle" font-family="${MONO}" font-size="4" fill="#9ba3a9">BLECH</text>`;
+  s += `<rect x="-2" y="-4" width="3.2" height="94" fill="url(#gMetal)" stroke="#7c848b" stroke-width=".3"/>
+    <path d="M1 8H122V70H55V78H43.5V74H41.65V78H30V70H1Z" fill="#1d4a34" stroke="#0e2a1c" stroke-width=".3"/>
+    <rect x="30.4" y="70.8" width="11" height="6.6" fill="url(#pGold)"/><rect x="43.9" y="70.8" width="10.7" height="6.6" fill="url(#pGold)"/>`;
+  const traces = ["60,42 60,60 50,66 50,70", "64,42 64,60 54,66", "68,42 68,58 46,66 46,70", "72,42 72,56 40,68 36,70", "56,32 44,32 40,28", "56,36 40,36 36,40", "76,34 82,34", "96,20 110,20 114,24 114,60", "100,50 110,50", "80,60 90,60 94,64"];
+  traces.forEach(p => s += `<polyline points="${p}" stroke="${PCB2}" stroke-width=".5" fill="none"/>`);
+  s += `<rect x="1" y="21" width="23" height="28" rx=".6" fill="url(#gMetal)" stroke="#7c848b" stroke-width=".4"/>
+    <path d="M4 25h17M4 45h17" stroke="#8d949b" stroke-width=".6"/><rect x="8" y="30" width="9" height="10" rx=".8" fill="none" stroke="#8d949b" stroke-width=".5"/>
+    <rect x="28" y="26" width="10" height="17" rx=".4" fill="#141618" stroke="#2c3036" stroke-width=".3"/>
+    <rect x="58" y="26" width="17" height="17" rx=".5" fill="#141618" stroke="#2c3036" stroke-width=".3"/>
+    <circle cx="60" cy="28" r=".5" fill="#3b4046"/>
+    <rect x="82" y="30.5" width="8.5" height="4" rx="2" fill="url(#gMetal)"/>`;
+  for (let i = 0; i < 6; i++) s += `<rect x="${59 + i * 2.7}" y="24.8" width=".9" height="1.2" fill="#9aa1a8"/><rect x="${59 + i * 2.7}" y="43" width=".9" height="1.2" fill="#9aa1a8"/>`;
+  [[95, 28], [95, 32], [100, 40], [104, 40], [45, 52], [48, 52], [80, 48], [84, 48]].forEach(([x, y]) => s += `<rect x="${x}" y="${y}" width="2" height="1" fill="#b9a37a"/>`);
+  s += silk(60, 36.5, "NET", 3, `fill-opacity=".5"`) + silk(90, 66, "WB-NIC REV A", 2.6) + silk(4, 55, "RJ45", 3) + silk(30, 85, "PCIe x1", 3, `fill="#9ba3a9"`);
+  return s; })() };
+
+/* ---------- Mainboard ATX (244 × 305 mm) ---------- */
+const MB = { socket: [115, 95], ram: [178, 188, 202, 212],
+  slots: [{ y: 183.3, len: 89, arm: 1, l: "PCIEX16_1" }, { y: 203.6, len: 25, l: "PCIEX1_1" }, { y: 244.3, len: 89, l: "PCIEX16_2" }, { y: 264.6, len: 25, l: "PCIEX1_2" }, { y: 284.9, len: 25, l: "PCIEX1_3" }] };
+ART.mainboard = { vb: [0, 0, 244, 305], svg: (() => {
+  let s = `<rect x="0" y="0" width="244" height="305" rx="2" fill="${PCB}" stroke="#0f2a1c" stroke-width=".8"/>`;
+  const T = p => `<polyline points="${p}" fill="none" stroke="${PCB2}" stroke-width=".45" stroke-linejoin="round" opacity=".8"/>`;
+  for (let i = 0; i < 22; i++){ const y = 58 + i * 3.4, d = i < 11 ? -4 : 4; s += T(`143,${y} 160,${y} 164,${y + d} 176,${y + d}`); }
+  for (let i = 0; i < 14; i++){ const x = 96 + i * 2.6; s += T(`${x},127 ${x},140 ${x - 6},146 ${x - 6},180`); }
+  for (let i = 0; i < 8; i++){ const y = 254 + i * 4; s += T(`220,${y} 226,${y} 229,${y - 2} 232,${y - 2}`); }
+  for (let i = 0; i < 9; i++){ const y = 252 + i * 4; s += T(`168,${y} 146,${y} 142,${y + 3} 138,${y + 3}`); }
+  ["8,200 30,200 36,206 36,236", "12,236 20,244 40,244", "8,262 26,262 32,268 32,300", "40,302 48,294 100,294", "150,236 150,226 170,206 230,206",
+   "170,182 200,182 206,188 230,188", "222,140 226,146 226,180", "62,152 62,176 70,184", "8,180 20,180 26,174 50,174", "180,300 190,290 220,290",
+   "40,170 48,162", "236,30 236,60 230,66", "226,128 226,140", "150,276 150,286 160,296"].forEach(p => s += T(p));
+  // Montagelöcher
+  [[6, 10], [130, 8], [238, 10], [6, 160], [146, 145], [238, 176], [6, 298], [112, 298], [238, 300]].forEach(([x, y]) =>
+    s += `<circle cx="${x}" cy="${y}" r="3.6" fill="#b5a466"/><circle cx="${x}" cy="${y}" r="1.8" fill="#0d1a12"/>`);
+  // I/O-Abdeckung
+  s += `<path d="M0 6H30L36 12V144L30 150H0Z" fill="#24282d" stroke="#3a4047" stroke-width=".6"/>
+        <path d="M4 16H26L31 21V60L26 65H4" fill="none" stroke="#3a4047" stroke-width=".6"/>
+        <path d="M4 132H26L31 127V96" fill="none" stroke="#3a4047" stroke-width=".6"/>
+        ${silk(20, 128, "WERKBANK  I/O", 4, `transform="rotate(-90 20 128)" fill="#8d959c"`)}`;
+  // Spannungswandler-Kühler
+  s += `<rect x="38" y="44" width="22" height="104" rx="1.5" fill="#2b3036" stroke="#4a5159" stroke-width=".5"/>
+        <rect x="40" y="47" width="18" height="98" fill="url(#pGroove)"/>
+        <rect x="64" y="20" width="104" height="20" rx="1.5" fill="#2b3036" stroke="#4a5159" stroke-width=".5"/>
+        <rect x="67" y="22" width="98" height="16" fill="url(#pGrooveV)"/>`;
+  // Stromanschluss CPU (8-Pin)
+  s += `<rect x="40" y="4" width="20" height="10" rx=".6" fill="#121416" stroke="#2c3035" stroke-width=".4"/>`;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) s += `<rect x="${41.6 + i * 4.6}" y="${5.3 + j * 4.4}" width="3.4" height="3.2" fill="#050607"/>`;
+  s += silk(62, 11, "CPU_PWR", 2.8);
+  // Lüfteranschlüsse
+  s += `<rect x="158" y="7" width="11" height="5" fill="#121416"/>` + [0, 1, 2, 3].map(i => `<rect x="${159.2 + i * 2.5}" y="8.6" width="1.2" height="1.8" fill="#caa245"/>`).join("") + silk(158, 5.2, "CPU_FAN", 2.4);
+  s += `<rect x="220" y="7" width="11" height="5" fill="#121416"/>` + [0, 1, 2, 3].map(i => `<rect x="${221.2 + i * 2.5}" y="8.6" width="1.2" height="1.8" fill="#caa245"/>`).join("") + silk(219, 5.2, "SYS_FAN", 2.4);
+  // CPU-Sockel
+  s += `<rect x="85" y="61" width="60" height="68" rx="1.5" fill="#2a2c2f" stroke="#3d4146" stroke-width=".5"/>
+        <rect x="95" y="75" width="40" height="40" fill="#3a3122"/><rect x="95" y="75" width="40" height="40" fill="url(#pLga)"/>
+        <rect x="92" y="72" width="46" height="46" rx="1" fill="none" stroke="#b8bec4" stroke-width="2.2"/>
+        <rect x="104" y="70.6" width="22" height="2.8" fill="#b8bec4"/><rect x="104" y="116.6" width="22" height="2.8" fill="#b8bec4"/>
+        <path d="M87.5 65V124L84.5 127.5" stroke="#cdd2d6" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <path d="M88.5 62.5H93.5L88.5 67.5Z" fill="#e2e7dd"/>
+        ${silk(115, 134, "SOCKET", 3, `text-anchor="middle"`)}`;
+  // Kondensatoren
+  [[66, 150], [74, 150], [148, 60], [148, 68], [148, 124], [80, 44], [88, 44], [70, 136], [78, 136], [160, 136]].forEach(([x, y]) =>
+    s += `<circle cx="${x}" cy="${y}" r="3" fill="#aab1b8" stroke="#79818a" stroke-width=".4"/><path d="M${x - 2.1} ${y - 2.1}A3 3 0 0 1 ${x + 2.1} ${y - 2.1}Z" fill="#4d5359"/>`);
+  // RAM-Steckplätze
+  MB.ram.forEach((c, i) => {
+    const col = i % 2 ? "#17191c" : "#3b4047";
+    s += `<rect x="${c - 3}" y="22" width="6" height="148" rx=".8" fill="${col}" stroke="#0c0d0f" stroke-width=".4"/>
+          <rect x="${c - .7}" y="29" width="1.4" height="134" fill="#050607"/>
+          <rect x="${c - .7}" y="100" width="1.4" height="1.6" fill="${col}"/>
+          <rect x="${c - 3.2}" y="17" width="6.4" height="9" rx=".8" fill="#c3c8cd"/><rect x="${c - 3.2}" y="166" width="6.4" height="9" rx=".8" fill="#c3c8cd"/>
+          ${silk(c, 181, ["A1", "A2", "B1", "B2"][i], 2.4, `text-anchor="middle"`)}`;
+  });
+  s += silk(195, 186, "DDR_DIMM", 2.4, `text-anchor="middle"`);
+  // 24-Pin-Stromanschluss
+  s += `<rect x="228" y="70" width="12" height="52" rx=".6" fill="#121416" stroke="#2c3035" stroke-width=".4"/>`;
+  for (let i = 0; i < 12; i++) for (let j = 0; j < 2; j++) s += `<rect x="${229.4 + j * 5.4}" y="${71.6 + i * 4.2}" width="3.8" height="3.4" fill="#050607"/>`;
+  s += silk(225.5, 120, "ATX_24P", 2.6, `transform="rotate(-90 225.5 120)"`);
+  // M.2
+  s += `<rect x="52" y="149" width="6" height="24" rx=".5" fill="#121416" stroke="#2c3035" stroke-width=".4"/><rect x="54.4" y="150.5" width="1.2" height="21" fill="#050607"/>
+        <circle cx="136" cy="161" r="2.3" fill="#c9a85a"/><circle cx="136" cy="161" r=".9" fill="#5a4a22"/>
+        <circle cx="116" cy="161" r="1.5" fill="none" stroke="#e2e7dd" stroke-width=".3"/><circle cx="98" cy="161" r="1.5" fill="none" stroke="#e2e7dd" stroke-width=".3"/>
+        ${silk(60, 147.4, "M2_1", 2.8)}${silk(92, 168, "2242", 1.8)}${silk(110, 168, "2260", 1.8)}${silk(130, 168, "2280", 1.8)}`;
+  // PCIe-Steckplätze
+  MB.slots.forEach(o => {
+    s += `<rect x="45" y="${o.y - 3.5}" width="${o.len}" height="7" rx=".6" fill="#141618" stroke="#2a2e33" stroke-width=".4"/>
+          <rect x="46" y="${o.y - .6}" width="${o.len - 2}" height="1.2" fill="#050607"/>
+          <rect x="56.6" y="${o.y - 3.5}" width="1.2" height="7" fill="${PCB}"/>`;
+    if (o.len > 30) s += `<rect x="134" y="${o.y - 3.8}" width="7" height="7.6" rx=".6" fill="#2b2f34"/>`;
+    if (o.arm) s += `<rect x="44.4" y="${o.y - 4.1}" width="${o.len + 1.2}" height="8.2" rx=".8" fill="none" stroke="#b8bec4" stroke-width=".8"/>`;
+    s += silk(45 + o.len + (o.len > 30 ? 9 : 3), o.y + 1, o.l, 2.6);
+  });
+  // Knopfzelle
+  s += `<circle cx="150" cy="262" r="11" fill="#121416"/><circle cx="150" cy="262" r="9.6" fill="url(#gMetal)" stroke="#858c93" stroke-width=".4"/>
+        <text x="150" y="263.4" text-anchor="middle" font-family="${MONO}" font-size="3" fill="#4a5056">CR2032</text>
+        <text x="150" y="257.6" text-anchor="middle" font-family="${MONO}" font-size="4" fill="#4a5056">+</text>${silk(145, 277.2, "BAT", 2.6)}`;
+  // Chipsatz-Kühler
+  s += `<path d="M172 248H216L220 252V288L216 292H172L168 288V252Z" fill="#2b3036" stroke="#4a5159" stroke-width=".5"/>
+        <rect x="172" y="252" width="44" height="36" fill="url(#pGroove)" opacity=".7"/>
+        <rect x="183" y="262" width="22" height="16" fill="#2b3036"/>
+        <text x="194" y="273" text-anchor="middle" font-family="${MONO}" font-size="7" font-weight="700" fill="#aab1b8">WB</text>`;
+  // SATA
+  for (let k = 0; k < 4; k++){ const y = 238 + k * 14;
+    s += `<rect x="232" y="${y}" width="12" height="12" rx=".5" fill="#121416" stroke="#2c3035" stroke-width=".4"/>
+          <rect x="234" y="${y + 2}" width="10" height="8" fill="#2a2e33"/><path d="M236 ${y + 4.5}H244V${y + 7.5}H236Z" fill="#121416"/><rect x="234" y="${y + 4.5}" width="2" height="3" fill="#121416"/>
+          ${silk(230.5, y + 7.4, "S" + (k + 1), 2.4, `text-anchor="end"`)}`; }
+  s += silk(238, 235, "SATA 6G", 2.6, `text-anchor="middle"`);
+  // Header unten
+  s += `<rect x="128" y="294" width="20" height="7" fill="#121416"/>` + [...Array(5)].map((_, i) => `<rect x="${129.6 + i * 3.8}" y="295.4" width="1.4" height="1.4" fill="#caa245"/><rect x="${129.6 + i * 3.8}" y="298.4" width="1.4" height="1.4" fill="#caa245"/>`).join("") + silk(130, 292, "USB", 2.4);
+  s += `<rect x="175" y="294" width="20" height="7" fill="#121416"/>` + [...Array(5)].map((_, i) => `<rect x="${176.6 + i * 3.8}" y="295.4" width="1.4" height="1.4" fill="#caa245"/><rect x="${176.6 + i * 3.8}" y="298.4" width="1.4" height="1.4" fill="#caa245"/>`).join("") + silk(175, 292, "F_PANEL", 2.4);
+  // LAN-Chip auf dem Mainboard
+  s += `<rect x="40" y="158" width="10" height="10" rx=".4" fill="#141618" stroke="#2c3036" stroke-width=".3"/>${silk(40, 156.4, "LAN", 2.2)}`;
+  // Kleinteile
+  const r = rng(3);
+  for (let i = 0; i < 70; i++){
+    const x = 62 + r() * 108, y = 44 + r() * 104;
+    if (x > 82 && x < 148 && y > 58 && y < 132) continue;
+    if (x > 136 && x < 146 && y > 52 && y < 130) continue;
+    s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${r() > .5 ? 1.4 : .8}" height="${r() > .5 ? .8 : 1.4}" fill="${r() > .4 ? "#b9a37a" : "#2c2c2c"}"/>`;
+  }
+  s += silk(166, 240, "WERKBANK B-ATX · REV 1.0", 3);
+  return s; })() };
+
+/* Symbole registrieren */
+const SYMS = { ram: "ram", ssd: "ssd", cpu: "cpu", coolerTop: "coolerTop", cooler: "cooler", hdd: "hdd", hddOpen: "hddOpen", psu: "psu", gpu: "gpu", nic: "nic", mainboard: "mainboard" };
+$("#lib").innerHTML = DEFS + "<defs>" + Object.keys(SYMS).map(k => {
+  const v = ART[k].vb; return `<symbol id="sym-${k}" viewBox="${v.join(" ")}" overflow="visible">${ART[k].svg}</symbol>`;
+}).join("") + "</defs>";
+
+/** Einzelzeichnung als eigenes SVG (mit Rand) */
+function drawing(key, pad = 3, extra = ""){
+  const [x, y, w, h] = ART[key].vb;
+  return `<svg viewBox="${x - pad} ${y - pad} ${w + pad * 2} ${h + pad * 2}" role="img">${ART[key].svg}${extra}</svg>`;
+}
+
+/* =====================================================================
+   Inhalte (Texte aus dem Auftrag)
+   ===================================================================== */
+const PARTS = {
+  mainboard: { ref: "MB1", name: "Mainboard (Hauptplatine)", tag: "MAINBOARD",
+    what: "Die grosse Platine, auf der alles steckt.", does: "Verbindet alle Teile miteinander.",
+    like: "Das Strassennetz einer Stadt.", know: "Jedes Teil hat seinen eigenen Steckplatz." },
+  cpu: { ref: "U1", name: "Prozessor (CPU)", tag: "PROZESSOR (CPU)",
+    what: "Ein quadratischer Chip mit Metalldeckel. Er sitzt im Sockel auf dem Mainboard.", does: "Er rechnet und führt alle Befehle aus.",
+    like: "Der Koch in der Küche.", know: "Er hat mehrere Kerne. Das sind wie mehrere Köche gleichzeitig. Er wird heiss und braucht einen Kühler." },
+  cooler: { ref: "FAN1", name: "CPU-Kühler", tag: "CPU-KÜHLER",
+    what: "Ein Kühlkörper aus Metall mit vielen dünnen Lamellen und einem Lüfter. Er sitzt direkt auf dem Prozessor.", does: "Führt die Wärme vom Prozessor weg.",
+    like: "Der Ventilator im Sommer.", know: "Zwischen Prozessor und Kühler kommt Wärmeleitpaste, damit die Wärme gut übergeht." },
+  ram: { ref: "DIMM", name: "Arbeitsspeicher (RAM)", tag: "ARBEITSSPEICHER (RAM)",
+    what: "Ein langer, flacher Riegel mit Speicherchips und goldenen Kontakten.", does: "Speichert alles, womit der PC gerade arbeitet.",
+    like: "Dein Schreibtisch. Je grösser, desto mehr kannst du gleichzeitig offen haben.", know: "Strom aus = alles weg. Darum muss man speichern." },
+  ssd: { ref: "M2_1", name: "SSD", tag: "SSD",
+    what: "Ein schmales Kärtchen mit Speicherchips. Es steckt direkt auf dem Mainboard, im M.2-Steckplatz.", does: "Speichert Windows, Programme und deine Dateien dauerhaft.",
+    like: "Dein Schrank.", know: "Hat keine beweglichen Teile, ist darum schnell und robust." },
+  hdd: { ref: "HDD1", name: "Festplatte (HDD)", tag: "FESTPLATTE (HDD)",
+    what: "Ein Metallgehäuse im 3,5-Zoll-Format. Innen drin sind eine drehende Magnetscheibe und ein Lesekopf.", does: "Speichert auch dauerhaft, aber auf einer drehenden Magnetscheibe mit einem Lesekopf.",
+    like: "Ein Plattenspieler.", know: "Günstiger für viel Speicherplatz, aber langsamer und empfindlich gegen Stösse." },
+  psu: { ref: "PSU1", name: "Netzteil", tag: "NETZTEIL",
+    what: "Ein Metallkasten mit Lüftergitter und einem Bündel Kabel.", does: "Macht aus dem Strom aus der Steckdose (230 Volt) die kleinen Spannungen, die die Teile brauchen.",
+    like: "Das Ladegerät vom Handy, nur grösser.", know: "Ist es zu schwach, startet der PC nicht oder stürzt ab." },
+  gpu: { ref: "VGA1", name: "Grafikkarte (GPU)", tag: "GRAFIKKARTE (GPU)",
+    what: "Eine lange Steckkarte mit Lüftern. Hinten am Blech sind die Anschlüsse für den Bildschirm.", does: "Berechnet das Bild für den Bildschirm. Wichtig für Games, Videoschnitt und KI.",
+    like: "Ein Spezialist nur für Bilder.", know: "Viele Prozessoren haben eine Grafik eingebaut. Büro-PCs brauchen darum oft keine eigene Grafikkarte." },
+  nic: { ref: "LAN1", name: "Netzwerkkarte", tag: "NETZWERKKARTE",
+    what: "Eine kleine Steckkarte mit einer Buchse für das Netzwerkkabel.", does: "Verbindet den PC mit dem Netzwerk, per Kabel oder WLAN.",
+    like: "Der Briefkasten des PCs.", know: "Ist oft schon im Mainboard eingebaut. Das Netzwerkkabel steckt man in die RJ45-Buchse." },
+};
+const ORDER = ["mainboard", "cpu", "cooler", "ram", "ssd", "hdd", "psu", "gpu", "nic"];
+const ARTKEY = { mainboard: "mainboard", cpu: "cpu", cooler: "cooler", ram: "ram", ssd: "ssd", hdd: "hdd", psu: "psu", gpu: "gpu", nic: "nic" };
+const CAPTION = { ram: "Ein RAM-Riegel, ausgebaut. Unten die goldenen Kontakte, die Kerbe ist nicht in der Mitte.",
+  ssd: "M.2-Format 2280 = 22 mm breit, 80 mm lang.", gpu: "Ausgebaut, Lüfterseite. Links das Blech mit den Bildschirmanschlüssen.",
+  nic: "Ausgebaut. Links das Blech mit der RJ45-Buchse.", psu: "Lüfterseite mit Kabelbündel und Steckern.",
+  cooler: "Im PC siehst du den Kühler von oben.", cpu: "Von oben, ohne Kühler. Oben der Metalldeckel mit Beschriftung.", mainboard: "Ohne eingebaute Teile.", hdd: "Geschlossen. Klicke auf «Deckel öffnen»." };
+const MB_LEGEND = [
+  [1, "CPU-Sockel", "Hier sitzt der Prozessor.", 115, 95],
+  [2, "RAM-Steckplätze", "Hier stecken die RAM-Riegel.", 195, 48],
+  [3, "PCIe-Steckplätze", "Hier stecken Steckkarten wie Grafikkarte oder Netzwerkkarte.", 92, 244],
+  [4, "M.2-Steckplatz", "Hier steckt die SSD.", 80, 161],
+  [5, "24-Pin-Stromanschluss", "Hier kommt das grosse Kabel vom Netzteil rein.", 234, 96],
+  [6, "SATA-Anschlüsse", "Für das Kabel zur Festplatte.", 238, 266],
+  [7, "Knopfzelle", "Eine kleine Batterie auf dem Mainboard.", 150, 262],
+];
+
+/* =====================================================================
+   Szene 1: offener PC von der Seite (Masse in mm)
+   ===================================================================== */
+function buildPC(){
+  const B = `transform="translate(14 18)"`;
+  const sy = i => 18 + 163 + i * 20.32;
+  let s = `<g class="deco">
+    <rect x="0" y="0" width="460" height="470" rx="5" fill="#3a3f45" stroke="#59616a" stroke-width="1"/>
+    <rect x="8" y="9" width="432" height="452" rx="2" fill="#23272b"/>
+    <rect x="8" y="9" width="432" height="452" rx="2" fill="none" stroke="#181b1e" stroke-width="2"/>
+    <rect x="268" y="40" width="14" height="104" rx="7" fill="#0e1012" stroke="#2f3439" stroke-width=".8"/><line x1="275" y1="46" x2="275" y2="138" stroke="#262a2e" stroke-width=".8"/>
+    <rect x="268" y="190" width="14" height="104" rx="7" fill="#0e1012" stroke="#2f3439" stroke-width=".8"/><line x1="275" y1="196" x2="275" y2="288" stroke="#262a2e" stroke-width=".8"/>
+    <rect x="176" y="348" width="96" height="13" rx="6.5" fill="#0e1012" stroke="#2f3439" stroke-width=".8"/><line x1="182" y1="354.5" x2="266" y2="354.5" stroke="#262a2e" stroke-width=".8"/>
+    <rect x="48" y="10.5" width="34" height="6" rx="3" fill="#0e1012" stroke="#2f3439" stroke-width=".6"/>
+    ${[60, 120, 180, 240, 300].map(y => `<rect x="296" y="${y}" width="6" height="3" rx="1" fill="#15181b"/>`).join("")}
+    ${[...Array(7)].map((_, i) => `<rect x="1.5" y="${sy(i) - 5}" width="5" height="18" fill="#7c848b" stroke="#5a6168" stroke-width=".4"/><rect x="2.8" y="${sy(i) - 2}" width="2.4" height="12" rx="1.2" fill="#3a3f45"/>`).join("")}
+    <text x="452" y="235" font-family="${MONO}" font-size="6" fill="#7c848b" transform="rotate(90 452 235)" text-anchor="middle">VORNE</text>
+    <text x="4.4" y="300" font-family="${MONO}" font-size="5" fill="#2a2e33" transform="rotate(-90 4.4 300)" text-anchor="middle">HINTEN</text>
+  </g>`;
+
+  // Mainboard
+  s += `<g class="part" data-part="mainboard"><rect class="hit" x="14" y="18" width="244" height="305"/>
+    <use href="#sym-mainboard" x="14" y="18" width="244" height="305"/>
+    ${[[6, 10], [130, 8], [238, 10], [6, 160], [146, 145], [238, 176], [6, 298], [112, 298], [238, 300]].map(([x, y]) => `<circle cx="${x + 14}" cy="${y + 18}" r="3" fill="#aeb5bb" stroke="#6f767d" stroke-width=".4"/><path d="M${x + 12.4} ${y + 18}h3.2M${x + 14} ${y + 16.4}v3.2" stroke="#5a6168" stroke-width=".6"/>`).join("")}
+  </g>`;
+
+  // SSD (M.2)
+  s += `<g class="part" data-part="ssd" ${B}><rect class="hit" x="51" y="147" width="88" height="28"/>
+    <use href="#sym-ssd" x="56.4" y="150" width="80" height="22" filter="url(#lift)"/>
+    <circle cx="136" cy="161" r="2" fill="#c3c9ce" stroke="#7c838a" stroke-width=".4"/></g>`;
+
+  // RAM (2 Riegel, von oben gesehen = Kante)
+  const ramEdge = c => {
+    let r = `<rect x="${c - .65}" y="29" width="1.3" height="133" fill="#1d4a34"/>`;
+    [5, 19, 33, 47, 77.5, 91.5, 105.5, 119.5].forEach(p => r += `<rect x="${c - 2.1}" y="${29 + p}" width="4.2" height="9.5" rx=".3" fill="#141618" stroke="#2f343a" stroke-width=".3"/>`);
+    r += `<rect x="${c - .9}" y="90" width="1.8" height="7" fill="#141618"/>`;
+    r += `<rect x="${c - 3.2}" y="22" width="6.4" height="5" rx=".8" fill="#c3c8cd"/><rect x="${c - 3.2}" y="164" width="6.4" height="5" rx=".8" fill="#c3c8cd"/>`;
+    return r; };
+  s += `<g class="part" data-part="ram" ${B}><rect class="hit" x="182" y="18" width="36" height="154"/><g filter="url(#lift)">${ramEdge(188)}${ramEdge(212)}</g></g>`;
+
+  // Prozessor (unter dem Kühler)
+  s += `<g class="part locked" data-part="cpu" ${B}><rect class="hit" x="91" y="71" width="48" height="48"/>
+    <use href="#sym-cpu" x="95" y="75" width="40" height="40"/>
+    <path d="M106 90 C110 84 121 85 124 90 C128 96 123 104 115 104 C108 104 102 97 106 90Z" fill="#c9ccd0" opacity=".55"/>
+    <rect x="93.4" y="73.4" width="43.2" height="43.2" rx="1" fill="none" stroke="#b9c0c6" stroke-width="2.4"/></g>`;
+
+  // CPU-Kühler
+  s += `<g class="part" data-part="cooler" ${B}><rect class="hit" x="58" y="45" width="114" height="100"/>
+    <g class="cooler-anim">
+      <rect x="59" y="80" width="10" height="30" rx="1.5" fill="#24282d" stroke="#3d434a" stroke-width=".5"/>
+      <rect x="161" y="80" width="10" height="30" rx="1.5" fill="#24282d" stroke="#3d434a" stroke-width=".5"/>
+      <use href="#sym-coolerTop" x="67" y="47" width="96" height="96" filter="url(#lift)"/>
+      <path d="M152 58 C156 40 160 26 163.5 13" stroke="#111315" stroke-width="1.6" fill="none"/>
+      <rect x="159.5" y="6.5" width="8" height="6" fill="#1a1c1f" stroke="#33383d" stroke-width=".4"/>
+    </g></g>`;
+
+  // Netzwerkkarte (Kante)
+  s += `<g class="part" data-part="nic" ${B}><rect class="hit" x="-14" y="276" width="124" height="26"/>
+    <g filter="url(#lift)">
+    <rect x="-13" y="273" width="4.2" height="30" fill="url(#gMetal)" stroke="#7c848b" stroke-width=".3"/>
+    <rect x="-9" y="283.4" width="116" height="1.9" fill="#1d4a34"/>
+    <rect x="-9" y="285.3" width="22" height="13.5" rx=".5" fill="url(#gMetal)" stroke="#7c848b" stroke-width=".4"/>
+    <path d="M-6 288h16M-6 296h16" stroke="#8d949b" stroke-width=".5"/>
+    <rect x="16" y="285.3" width="10" height="6" fill="#141618"/>
+    <rect x="45" y="285.3" width="16" height="8" fill="#828a91"/><rect x="45" y="285.3" width="16" height="8" fill="url(#pFinV)" opacity=".8"/>
+    <rect x="70" y="285.3" width="3" height="2" fill="#b9a37a"/><rect x="80" y="285.3" width="6" height="3" rx="1.5" fill="url(#gMetal)"/>
+    </g></g>`;
+
+  // Grafikkarte (Kante mit Lamellen-Fenstern)
+  s += `<g class="part" data-part="gpu" ${B}><rect class="hit" x="-14" y="174" width="304" height="62"/>
+    <g filter="url(#lift)">
+    <rect x="-13" y="172" width="4.2" height="66" fill="url(#gMetal)" stroke="#7c848b" stroke-width=".3"/>
+    <rect x="-9" y="178.6" width="293" height="2.4" fill="#3e444b"/>
+    <rect x="-9" y="181" width="291" height="2" fill="#1d4a34"/>
+    <path d="M-9 183H280L286 189V228L280 234H-9Z" fill="#2a2e33" stroke="#4a5159" stroke-width=".6"/>
+    <line x1="-6" y1="186.6" x2="278" y2="186.6" stroke="#8d959d" stroke-width=".7"/>
+    ${[8, 128].map(x => `<rect x="${x}" y="191" width="104" height="36" fill="#5d656c"/><rect x="${x}" y="191" width="104" height="36" fill="url(#pFinV)"/>
+      ${[198, 206.5, 215].map(y => `<rect x="${x}" y="${y}" width="104" height="2.6" fill="url(#gCopper)" opacity=".9"/>`).join("")}
+      <rect x="${x}" y="191" width="104" height="36" fill="none" stroke="#17191c" stroke-width="1"/>`).join("")}
+    <text x="236" y="209" font-family="${MONO}" font-size="6.4" font-weight="700" fill="#c9ced3">WB-GRAFIK</text>
+    <text x="236" y="217" font-family="${MONO}" font-size="4" fill="#8d959d">GPU · 3 LÜFTER</text>
+    <rect x="264" y="180" width="18" height="8" rx=".6" fill="#17191c" stroke="#33383d" stroke-width=".4"/>
+    </g></g>`;
+
+  // Netzteil
+  s += `<g class="part" data-part="psu"><rect class="hit" x="8" y="375" width="152" height="87"/>
+    <g filter="url(#lift)">
+    <rect x="9" y="376" width="149" height="84" rx="1.5" fill="#2c3035" stroke="#4d545b" stroke-width=".8"/>
+    <rect x="9" y="376" width="8" height="84" fill="#3a3f45"/><rect x="9" y="378" width="8" height="80" fill="url(#pPerf)"/>
+    <rect x="34" y="388" width="96" height="60" rx="1" fill="#dcd8cc"/>
+    <text x="40" y="401" font-family="${MONO}" font-size="7.4" font-weight="700" fill="#1e1e1e">NETZTEIL</text>
+    <text x="40" y="410" font-family="${MONO}" font-size="4.6" fill="#333">ATX · AC 230 V ~</text>
+    <rect x="40" y="414" width="84" height=".6" fill="#555"/>
+    ${[0, 1, 2].map(i => `<rect x="40" y="${418 + i * 4}" width="${[60, 48, 54][i]}" height="1.4" fill="#9c9a94"/>`).join("")}
+    ${[...Array(30)].map((_, i) => `<rect x="${40 + i * 1.4}" y="432" width="${i % 3 ? .5 : .9}" height="10" fill="#222"/>`).join("")}
+    <rect x="92" y="430" width="12" height="12" fill="none" stroke="#333" stroke-width=".6"/>
+    <rect x="155" y="398" width="7" height="32" rx="3" fill="#0b0c0e"/>
+    </g></g>`;
+
+  // Festplatte im Laufwerkskäfig
+  s += `<g class="part" data-part="hdd"><rect class="hit" x="285" y="343" width="155" height="118"/>
+    <rect x="286" y="344" width="152" height="116" rx="1.5" fill="#30353a" stroke="#4d545b" stroke-width=".8"/>
+    <rect x="288" y="349" width="150" height="107" rx="1" fill="#1d2024"/>
+    <use href="#sym-hdd" x="290.5" y="352" width="147" height="101.6" filter="url(#lift)"/></g>`;
+
+  // Kabel + Lüfter (nur Dekoration)
+  s += `<g class="deco">
+    <rect x="53" y="20.5" width="22" height="13" rx="1" fill="#17191c" stroke="#30353b" stroke-width=".5"/>
+    <rect x="56" y="11" width="16" height="10" fill="#121416"/><rect x="56" y="11" width="16" height="10" fill="url(#pGrooveV)" opacity=".5"/>
+    <rect x="240.5" y="86" width="17" height="56" rx="1" fill="#17191c" stroke="#30353b" stroke-width=".5"/>
+    <path d="M257 92 C266 92 266 96 272 96 M257 136 C266 136 266 132 272 132" stroke="#121416" stroke-width="4" fill="none"/>
+    <rect x="257" y="92" width="16" height="44" fill="#121416"/><rect x="257" y="92" width="16" height="44" fill="url(#pGroove)" opacity=".6"/>
+    <path d="M287 204 C292 226 280 252 276 268" stroke="#121416" stroke-width="5" fill="none"/>
+    <path d="M287 204 C292 226 280 252 276 268" stroke="#2c3137" stroke-width="5" stroke-dasharray=".8 1.2" fill="none" opacity=".7"/>
+    <rect x="277" y="197" width="20" height="9" rx=".8" fill="#17191c" stroke="#33383d" stroke-width=".4"/>
+    ${[[402, 196, 4.5], [410, 214, 4.5], [418, 232, 4.5], [426, 250, 4]].map(([y, x, w]) => `<path d="M162 ${y} C190 ${y} ${x - 10} 380 ${x} 356" stroke="#101214" stroke-width="${w}" fill="none"/><path d="M162 ${y} C190 ${y} ${x - 10} 380 ${x} 356" stroke="#2c3137" stroke-width="${w}" stroke-dasharray=".8 1.2" fill="none" opacity=".7"/>`).join("")}
+    <path d="M162 428 C215 446 255 408 288 400" stroke="#101214" stroke-width="3.2" fill="none"/>
+    <rect x="283" y="393" width="8" height="15" rx=".8" fill="#17191c" stroke="#33383d" stroke-width=".4"/>
+    <path d="M262 276 C284 278 266 366 288 368" stroke="#8a2c2c" stroke-width="2.6" fill="none"/>
+    <rect x="253" y="272.5" width="11" height="7.5" rx=".6" fill="#6b2222"/>
+    <rect x="284" y="363.5" width="7" height="9" rx=".6" fill="#6b2222"/>
+    <rect x="9" y="26" width="24" height="120" rx="1.5" fill="#17191c" stroke="#3a4047" stroke-width=".8"/>
+    <rect x="13" y="30" width="16" height="112" fill="#101214"/><rect x="14" y="76" width="14" height="20" fill="#23272b"/>
+    ${[36, 52, 100, 116, 132].map(y => `<path d="M14 ${y} l14 4" stroke="#2c3137" stroke-width="1.2"/>`).join("")}
+    ${[24, 168].map(y => `<rect x="413" y="${y}" width="25" height="140" rx="1.5" fill="#17191c" stroke="#3a4047" stroke-width=".8"/><rect x="417" y="${y + 4}" width="17" height="132" fill="#101214"/><rect x="418" y="${y + 60}" width="15" height="20" fill="#23272b"/>${[12, 30, 100, 118].map(o => `<path d="M418 ${y + o} l15 4" stroke="#2c3137" stroke-width="1.2"/>`).join("")}`).join("")}
+  </g>`;
+  s += `<g class="tag" id="pcTag"></g>`;
+  return s;
+}
+
+/* =====================================================================
+   Szene 3: Server von oben (Masse in mm, vorne = links)
+   ===================================================================== */
+function buildServer(){
+  let s = `<g class="deco">
+    <rect x="-9" y="-16" width="9" height="466" rx="1" fill="#4a5056" stroke="#666e76" stroke-width=".6"/>
+    <circle cx="-4.5" cy="-8" r="2.4" fill="#2a2e33"/><circle cx="-4.5" cy="442" r="2.4" fill="#2a2e33"/>
+    <rect x="0" y="0" width="650" height="434" rx="2" fill="#2f3439" stroke="#5b636b" stroke-width="1"/>
+    <rect x="3" y="3" width="644" height="428" fill="#1f2326"/>
+    <text x="-74" y="217" font-family="${MONO}" font-size="9" fill="#9ba3a9" transform="rotate(-90 -74 217)" text-anchor="middle" letter-spacing="2">VORNE</text>
+    <text x="684" y="217" font-family="${MONO}" font-size="9" fill="#9ba3a9" transform="rotate(90 684 217)" text-anchor="middle" letter-spacing="2">HINTEN</text>
+    <rect x="200" y="8" width="446" height="418" fill="${PCB}"/>
+    ${["210,30 240,30 246,36 246,60", "380,60 420,60 426,66 426,140", "380,100 410,100", "380,300 420,300 426,306 426,380", "380,230 440,230", "212,200 240,200", "212,240 240,240", "380,180 400,180 406,186 406,200"].map(p => `<polyline points="${p}" stroke="${PCB2}" stroke-width=".8" fill="none"/>`).join("")}
+    <rect x="120" y="14" width="7" height="406" fill="#1d4a34" stroke="#0e2a1c" stroke-width=".4"/>
+    ${[...Array(12)].map((_, i) => `<rect x="121" y="${i < 6 ? 22 + i * 20 : 296 + (i - 6) * 20}" width="5" height="10" fill="#121416"/>`).join("")}
+    <rect x="6" y="150" width="112" height="134" fill="#262a2f" stroke="#3d434a" stroke-width=".6"/>
+    <rect x="10" y="154" width="104" height="96" fill="url(#pPerf)" opacity=".9"/>
+    <text x="62" y="268" font-family="${MONO}" font-size="6" fill="#8d959c" text-anchor="middle">WB-SERVER 2U</text>
+    ${[...Array(6)].map((_, i) => { const y = 16 + i * 68.5; return `<rect x="146" y="${y}" width="42" height="62" rx="2" fill="#17191c" stroke="#3a4047" stroke-width=".7"/><rect x="150" y="${y + 4}" width="34" height="54" fill="#0f1113"/><rect x="160" y="${y + 22}" width="14" height="18" fill="#23272b"/>${[10, 16, 44, 50].map(o => `<path d="M151 ${y + o} l32 3" stroke="#2c3137" stroke-width="1.4"/>`).join("")}<rect x="182" y="${y + 24}" width="8" height="14" rx="1" fill="#2a2e33"/>`; }).join("")}
+    ${[[455, 18], [455, 140]].map(([x, y]) => `<rect x="${x}" y="${y}" width="190" height="112" rx="1.5" fill="#2a2f34" stroke="#4a5157" stroke-width=".7"/>
+      <rect x="${x + 14}" y="${y + 26}" width="168" height="5" fill="#1d4a34"/><rect x="${x + 40}" y="${y + 31}" width="30" height="8" fill="#141618"/>
+      <rect x="${x + 14}" y="${y + 72}" width="140" height="5" fill="#1d4a34"/><rect x="${x + 60}" y="${y + 77}" width="22" height="8" fill="#141618"/>
+      <text x="${x + 8}" y="${y + 12}" font-family="${MONO}" font-size="6" fill="#8d959c">${y < 100 ? "RISER 1" : "RISER 2"}</text>`).join("")}
+    <rect x="400" y="190" width="34" height="34" rx="1" fill="#2b3036" stroke="#4a5159" stroke-width=".5"/><rect x="403" y="193" width="28" height="28" fill="url(#pGroove)" opacity=".7"/>
+    <rect x="410" y="268" width="40" height="150" fill="#1d4a34" stroke="#0e2a1c" stroke-width=".4"/>
+    ${[290, 330, 370, 400].map(y => `<rect x="416" y="${y}" width="22" height="10" fill="#121416"/>`).join("")}
+    <text x="236" y="112" font-family="${MONO}" font-size="6" fill="#e2e7dd" transform="rotate(-90 236 112)" text-anchor="middle">CPU1</text>
+    <text x="236" y="322" font-family="${MONO}" font-size="6" fill="#e2e7dd" transform="rotate(-90 236 322)" text-anchor="middle">CPU2</text>
+  </g>`;
+
+  // Festplatten (Hot-Swap-Einschübe)
+  s += `<g class="part" data-part="disk"><rect class="hit" x="5" y="15" width="114" height="130"/><rect class="hit" x="5" y="289" width="114" height="130"/>
+    <rect x="6" y="16" width="112" height="128" fill="#2a2f34" stroke="#454c53" stroke-width=".6"/>
+    <rect x="6" y="290" width="112" height="128" fill="#2a2f34" stroke="#454c53" stroke-width=".6"/>`;
+  for (let i = 0; i < 12; i++){
+    const y = i < 6 ? 18 + i * 20.6 : 292 + (i - 6) * 20.6;
+    s += `<g class="tray" data-i="${i}">
+      <rect x="8" y="${y}" width="108" height="18.4" rx="1" fill="#3a4047" stroke="#1a1d20" stroke-width=".6"/>
+      <rect x="28" y="${y + 3.2}" width="86" height="12" fill="#16181b"/><rect x="34" y="${y + 7.6}" width="60" height="3.2" fill="#e7e4db" opacity=".85"/>
+      <rect x="8" y="${y + 1}" width="17" height="16.4" rx="1" fill="#23272b" stroke="#565d65" stroke-width=".5"/>
+      <rect x="13" y="${y + 4}" width="9" height="10.4" rx="1" fill="none" stroke="#6b737b" stroke-width=".8"/>
+      <circle cx="10.6" cy="${y + 5}" r="1.3" fill="#43b97c"/><circle cx="10.6" cy="${y + 13.4}" r="1.3" fill="#6b737b"/>
+    </g>`;
+  }
+  s += `</g>`;
+
+  // CPUs mit Kühlkörper
+  s += `<g class="part" data-part="cpu">`;
+  [112, 322].forEach(cy => s += `<rect class="hit" x="247" y="${cy - 48}" width="106" height="96"/>`);
+  [112, 322].forEach(cy => {
+    s += `<g filter="url(#lift)"><rect x="250" y="${cy - 45}" width="100" height="90" rx="2" fill="#5f676e" stroke="#7d858c" stroke-width=".6"/>
+      <rect x="252" y="${cy - 43}" width="96" height="86" fill="url(#pFinH)"/>
+      <rect x="250" y="${cy - 45}" width="100" height="90" rx="2" fill="none" stroke="#3c4349" stroke-width=".8"/>
+      ${[[258, cy - 37], [342, cy - 37], [258, cy + 37], [342, cy + 37]].map(([x, y], k) => `<circle cx="${x}" cy="${y}" r="4.2" fill="#30353a" stroke="#9aa2a9" stroke-width=".6"/><text x="${x}" y="${y + 1.6}" text-anchor="middle" font-family="${MONO}" font-size="4.4" fill="#c9ced3">${k + 1}</text>`).join("")}</g>`;
+  });
+  s += `</g>`;
+
+  // RAM: 16 Riegel
+  s += `<g class="part" data-part="ram">`;
+  const rows = [];
+  [112, 322].forEach(cy => { s += `<rect class="hit" x="225" y="${cy - 92}" width="150" height="34"/><rect class="hit" x="225" y="${cy + 56}" width="150" height="34"/>`;
+    for (let k = 0; k < 4; k++){ rows.push(cy - 88 + k * 8.5); rows.push(cy + 60 + k * 8.5); } });
+  rows.forEach(y => {
+    s += `<rect x="228" y="${y - 2.8}" width="144" height="5.6" fill="#0b0c0d"/>
+      <rect x="233" y="${y - 2}" width="134" height="4" fill="#141618"/>
+      <rect x="233" y="${y - .5}" width="134" height="1" fill="#1d4a34"/>
+      ${[5, 19, 33, 47, 77.5, 91.5, 105.5, 119.5].map(p => `<rect x="${233 + p}" y="${y - 2}" width="9.5" height="4" fill="#191b1e"/>`).join("")}
+      <rect x="228" y="${y - 2.6}" width="5" height="5.2" rx=".6" fill="#cfd3d7"/><rect x="367" y="${y - 2.6}" width="5" height="5.2" rx=".6" fill="#cfd3d7"/>`;
+  });
+  s += `</g>`;
+
+  // Netzteile
+  s += `<g class="part" data-part="psu"><rect class="hit" x="452" y="266" width="218" height="154"/>`;
+  [[1, 270], [2, 346]].forEach(([n, y]) => {
+    s += `<g class="psu-unit" data-unit="${n}">
+      <rect class="body" x="455" y="${y}" width="193" height="70" rx="1.5" fill="#5a6168" stroke="#7a828a" stroke-width=".7"/>
+      <rect x="600" y="${y + 3}" width="46" height="64" fill="#2b2f33"/><rect x="600" y="${y + 3}" width="46" height="64" fill="url(#pPerf)"/>
+      <rect x="470" y="${y + 12}" width="110" height="20" fill="#dcd8cc" opacity=".9"/>
+      <text x="474" y="${y + 24.5}" font-family="${MONO}" font-size="7" font-weight="700" fill="#222">NETZTEIL ${n}</text>
+      <path d="M648 ${y + 14}H666V${y + 56}H648" stroke="#1a1d20" stroke-width="3.2" fill="none"/>
+      <circle class="led" cx="640" cy="${y + 7}" r="2.6" fill="#43b97c"/>
+      <path class="xmark" d="M470 ${y + 40}l20 20m0 -20l-20 20" stroke="#e2574c" stroke-width="3"/>
+    </g>`;
+  });
+  s += `</g>`;
+  s += `<g class="tag" id="srvTag"></g>`;
+  return s;
+}
+
+const SRV = {
+  cpu: { name: "2 Prozessoren", tag: "2 PROZESSOREN",
+    text: "Dieser Server hat 2 Prozessoren statt nur einen. Das sind doppelt so viele Köche in der Küche.",
+    note: "Auf jedem Prozessor sitzt ein grosser Kühlkörper." },
+  ram: { name: "Viele RAM-Riegel", tag: "16 RAM-RIEGEL",
+    text: "Hier stecken 16 RAM-Riegel, im PC vorher nur 2. Der Schreibtisch ist also viel grösser: Es kann viel mehr gleichzeitig offen sein.",
+    note: "Die Riegel stehen in Reihen links und rechts von den Prozessoren." },
+  disk: { name: "Festplatten zum Herausziehen", tag: "FESTPLATTEN (HOT-SWAP)",
+    text: "Vorne stecken mehrere Festplatten in Einschüben. Man kann sie herausziehen und tauschen, während der Server weiterläuft. Das nennt man Hot-Swap.",
+    note: "Probier es aus: Klicke direkt auf einen Einschub." },
+  psu: { name: "2 Netzteile", tag: "2 NETZTEILE",
+    text: "Der Server hat 2 Netzteile. Fällt eines aus, läuft der Server mit dem anderen weiter.",
+    note: "Probier es aus: Lass Netzteil 1 ausfallen." },
+};
+
+/* =====================================================================
+   Gemeinsame Szenen-Logik (Hover, Klick, Beschriftung)
+   ===================================================================== */
+function makeScene(svg, tagLayer, fs, getLabel, onSelect){
+  const parts = $$(".part", svg);
+  parts.forEach(p => {
+    $$(".hit", p).forEach(h => { const o = h.cloneNode(); o.setAttribute("class", "ol"); p.appendChild(o); });
+    p.setAttribute("tabindex", "0"); p.setAttribute("role", "button");
+    p.setAttribute("aria-label", getLabel(p.dataset.part));
+  });
+  const sc = { svg, sel: null, hot: null };
+  function bbox(p){
+    const m = svg.getScreenCTM().inverse(); let x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+    $$(".hit", p).forEach(h => { const r = h.getBoundingClientRect();
+      [[r.left, r.top], [r.right, r.bottom]].forEach(([cx, cy]) => { const pt = new DOMPoint(cx, cy).matrixTransform(m);
+        x1 = Math.min(x1, pt.x); y1 = Math.min(y1, pt.y); x2 = Math.max(x2, pt.x); y2 = Math.max(y2, pt.y); }); });
+    return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+  }
+  function tag(p){
+    if (!p){ tagLayer.innerHTML = ""; return; }
+    const t = getLabel(p.dataset.part).toUpperCase(), b = bbox(p), vb = svg.viewBox.baseVal;
+    const padX = fs * .6, h = fs * 1.75, w = t.length * fs * .61 + padX * 2;
+    let x = b.x, y = b.y - h - fs * .45, below = false;
+    if (y < vb.y + 1){ y = b.y + b.h + fs * .45; below = true; }
+    if (y + h > vb.y + vb.height - 1){ y = b.y + fs * .4; below = false; }
+    x = Math.max(vb.x + 1, Math.min(x, vb.x + vb.width - w - 1));
+    const tx = Math.max(x + 2, Math.min(b.x + 3, x + w - 2));
+    tagLayer.innerHTML = `<line class="tick" x1="${tx}" y1="${below ? y : y + h}" x2="${tx}" y2="${below ? b.y + b.h : b.y}"/>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}"/><text x="${x + padX}" y="${y + h * .7}" font-size="${fs}">${t}</text>`;
+  }
+  function setHot(p){
+    sc.hot = p; parts.forEach(q => q.classList.toggle("hot", q === p));
+    svg.classList.toggle("hovering", !!p); tag(p || sc.sel);
+  }
+  parts.forEach(p => {
+    p.addEventListener("pointerenter", e => { if (e.pointerType !== "touch") setHot(p); });
+    p.addEventListener("pointerleave", e => { if (e.pointerType !== "touch" && sc.hot === p) setHot(null); });
+    p.addEventListener("focus", () => { if (p.matches(":focus-visible")) setHot(p); });
+    p.addEventListener("blur", () => { if (sc.hot === p) setHot(null); });
+    p.addEventListener("click", e => onSelect(p.dataset.part, e));
+    p.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); onSelect(p.dataset.part, e); } });
+  });
+  sc.select = id => {
+    sc.sel = id ? parts.find(p => p.dataset.part === id) : null;
+    parts.forEach(q => q.classList.toggle("sel", q === sc.sel));
+    if (!sc.hot) tag(sc.sel);
+  };
+  sc.retag = () => tag(sc.hot || sc.sel);
+  return sc;
+}
+
+/* =====================================================================
+   Modus 1: Entdecken
+   ===================================================================== */
+const pc = $("#pc"), panel = $("#panel");
+pc.innerHTML = buildPC();
+const found = new Set();
+let coolerOff = false, hddOpen = false;
+$("#leds").innerHTML = ORDER.map(() => "<span></span>").join("");
+
+const pcScene = makeScene(pc, $("#pcTag"), 8.2, id => PARTS[id].tag, (id) => selectPart(id));
+
+function setCooler(off){
+  coolerOff = off;
+  pc.classList.toggle("cooler-off", off);
+  $('[data-part="cpu"]', pc).classList.toggle("locked", !off);
+  $('[data-part="cooler"]', pc).classList.toggle("locked", off);
+  $("#coolerBtn").textContent = off ? "Kühler wieder aufsetzen" : "Kühler abnehmen";
+  if (off && pcScene.sel && pcScene.sel.dataset.part === "cooler") selectPart(null);
+  if (!off && pcScene.sel && pcScene.sel.dataset.part === "cpu") selectPart(null);
+}
+$("#coolerBtn").addEventListener("click", () => setCooler(!coolerOff));
+
+function updateProgress(){
+  $$("#leds span").forEach((l, i) => l.classList.toggle("on", i < found.size));
+  $("#progtxt").textContent = `${found.size} von 9 Teilen entdeckt`;
+}
+
+function listHTML(){
+  return `<ol class="plist">${ORDER.map(id => `<li class="${found.has(id) ? "done" : ""}"><button data-go="${id}"><span class="box"></span><span class="ref">${PARTS[id].ref}</span><span class="nm">${PARTS[id].name}</span></button></li>`).join("")}</ol>`;
+}
+
+function renderIntro(){
+  const all = found.size === 9;
+  panel.innerHTML = `<div class="pane">
+    <div class="kicker">${all ? "Geschafft" : "Anleitung"}</div>
+    <h2>${all ? "Alle 9 Teile entdeckt!" : "Was steckt in einem PC?"}</h2>
+    ${all ? `<p class="lead">Super. Jetzt kannst du dein Wissen im Quiz testen.</p><p><button class="btn primary" data-goto="quiz">Zum Quiz</button></p>`
+          : `<p class="lead">Du siehst einen offenen PC von der Seite. Fahre mit der Maus über die Teile. Klicke auf ein Teil, um mehr zu erfahren.</p>`}
+    <p class="big">Alle Teile stecken auf dem Mainboard. Das Netzteil versorgt sie mit Strom.</p>
+    <hr class="cut">
+    <div class="kicker">Teile-Liste · ${found.size}/9</div>
+    ${listHTML()}
+    ${!found.has("cpu") && found.has("cooler") ? `<p class="toast">Tipp: Unter dem Kühler versteckt sich noch ein Teil. Nimm den Kühler ab.</p>` : ""}
+  </div>`;
+  panel.scrollTop = 0;
+}
+
+function renderPart(id){
+  const P = PARTS[id];
+  let fig = "";
+  if (id === "mainboard"){
+    const mk = MB_LEGEND.map(([n, , , x, y]) => `<g class="mk" data-n="${n}"><circle cx="${x}" cy="${y}" r="9.5"/><text x="${x}" y="${y + 3.5}" text-anchor="middle">${n}</text></g>`).join("");
+    fig = `<figure class="fig">${drawing("mainboard", 4, mk)}<figcaption>${CAPTION.mainboard} Fahre über die Liste.</figcaption></figure>
+      <ul class="legend">${MB_LEGEND.map(([n, t, d]) => `<li data-n="${n}"><span class="num">${n}</span><span><b>${t}:</b> ${d}</span></li>`).join("")}</ul>`;
+  } else if (id === "hdd"){
+    fig = `<figure class="fig" id="hddFig">${hddSVG(hddOpen)}<figcaption id="hddCap">${hddOpen ? "Geöffnet: Die Scheibe dreht sich, der Lesearm bewegt sich darüber." : CAPTION.hdd}</figcaption></figure>
+      <p><button class="btn" id="hddBtn">${hddOpen ? "Deckel schliessen" : "Deckel öffnen"}</button></p>`;
+  } else {
+    fig = `<figure class="fig">${drawing(ARTKEY[id], id === "cpu" ? 3 : 4)}<figcaption>${CAPTION[id] || ""}</figcaption></figure>`;
+  }
+  const rest = ORDER.filter(k => !found.has(k));
+  panel.innerHTML = `<div class="pane">
+    <p style="margin:0 0 10px"><button class="btn" data-back>← Teile-Liste</button></p>
+    <div class="kicker">Bauteil · ${PARTS[id].ref}</div>
+    <h2>${P.name}</h2>
+    ${fig}
+    <dl class="facts">
+      <dt>Was ist das?</dt><dd>${P.what}</dd>
+      <dt>Was macht es?</dt><dd>${P.does}</dd>
+      <dt>Vergleich</dt><dd class="like">${P.like}</dd>
+      <dt>Gut zu wissen</dt><dd>${P.know}</dd>
+    </dl>
+    ${id === "cooler" && !coolerOff ? `<p class="toast">Unter dem Kühler sitzt der Prozessor. <button class="btn" data-cooleroff style="margin-left:6px">Kühler abnehmen</button></p>` : ""}
+    <hr class="cut">
+    ${rest.length ? `<p class="note">Noch zu entdecken: ${rest.length} ${rest.length === 1 ? "Teil" : "Teile"}.</p>` : `<p><button class="btn primary" data-goto="quiz">Alle entdeckt – zum Quiz</button></p>`}
+  </div>`;
+  panel.scrollTop = 0;
+  if (id === "mainboard"){
+    $$(".legend li", panel).forEach(li => {
+      const on = v => { li.classList.toggle("hl", v); $(`.mk[data-n="${li.dataset.n}"]`, panel).classList.toggle("hl", v); };
+      li.addEventListener("pointerenter", () => on(true)); li.addEventListener("pointerleave", () => on(false));
+      li.addEventListener("click", () => { const v = !li.classList.contains("hl"); $$(".legend li", panel).forEach(x => { x.classList.remove("hl"); }); $$(".mk", panel).forEach(x => x.classList.remove("hl")); on(v); });
+    });
+  }
+  if (id === "hdd") $("#hddBtn").addEventListener("click", () => { hddOpen = !hddOpen; renderPart("hdd"); });
+}
+
+function hddSVG(open){
+  const call = open ? `<g class="callouts">
+      <polyline points="118,24 124,-4 156,-4"/><circle cx="118" cy="24" r="1.1"/><text x="110" y="-6.5">Magnetscheibe</text>
+      <polyline points="45,54 36,108 0,108"/><circle cx="45" cy="54" r="1.1"/><text x="0" y="114.5">Lesearm</text>
+      <polyline points="71,34 62,-4 0,-4"/><circle cx="71" cy="34" r="1.1"/><text x="0" y="-6.5">Lesekopf</text>
+    </g>` : "";
+  return `<svg viewBox="-4 ${open ? -14 : -4} 166 ${open ? 132 : 110}" role="img">${open ? ART.hddOpen.svg : ART.hdd.svg}${call}</svg>`;
+}
+
+function selectPart(id){
+  if (id === "cpu" && !coolerOff) setCooler(true);
+  pcScene.select(id);
+  if (!id){ renderIntro(); return; }
+  found.add(id); updateProgress(); renderPart(id);
+  if (window.matchMedia("(max-width:900px), (orientation:portrait) and (max-width:1100px)").matches)
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+panel.addEventListener("click", e => {
+  const go = e.target.closest("[data-go]"); if (go) selectPart(go.dataset.go);
+  if (e.target.closest("[data-back]")) selectPart(null);
+  if (e.target.closest("[data-cooleroff]")) setCooler(true);
+  const g = e.target.closest("[data-goto]"); if (g) showView(g.dataset.goto);
+});
+pc.addEventListener("click", e => { if (!e.target.closest(".part")) selectPart(null); });
+
+/* =====================================================================
+   Modus 3: Server
+   ===================================================================== */
+const srv = $("#srv"), srvPanel = $("#srvPanel");
+srv.innerHTML = buildServer();
+let psuFailed = false;
+const srvScene = makeScene(srv, $("#srvTag"), 9.5, id => SRV[id].tag, (id, e) => {
+  if (id === "disk"){ const t = e.target.closest && e.target.closest(".tray"); if (t) t.classList.toggle("out"); }
+  srvSelect(id);
+});
+function srvStatus(){
+  $("#srvStatus").innerHTML = `<span><span class="dot ${psuFailed ? "bad" : ""}"></span>NETZTEIL 1: ${psuFailed ? "AUS" : "OK"}</span>
+    <span><span class="dot"></span>NETZTEIL 2: OK</span><span class="run">SERVER: LÄUFT</span>`;
+}
+function srvIntro(){
+  srvPanel.innerHTML = `<div class="pane">
+    <div class="kicker">Bonus</div>
+    <h2>Und im Server?</h2>
+    <p class="lead">Gleiche Idee wie beim PC, aber vieles ist mehrfach da. Du siehst einen Server von oben, der Deckel ist offen. Klicke auf die Teile.</p>
+    <table class="cmp"><thead><tr><th></th><th>PC</th><th>Server</th></tr></thead><tbody>
+      <tr><td>Prozessoren</td><td>1</td><td>2</td></tr>
+      <tr><td>RAM-Riegel</td><td>2</td><td>16</td></tr>
+      <tr><td>Speicher</td><td>1 SSD + 1 HDD</td><td>12 Festplatten, vorne herausziehbar</td></tr>
+      <tr><td>Netzteile</td><td>1</td><td>2</td></tr>
+    </tbody></table>
+    <p class="big">Darum können auf einem Server viele virtuelle Maschinen gleichzeitig laufen.</p>
+    <p class="note">Eine virtuelle Maschine ist ein ganzer PC, der nur als Programm läuft.</p>
+    <hr class="cut">
+    <div class="kicker">Teile im Server</div>
+    <ol class="plist">${Object.keys(SRV).map(k => `<li><button data-sgo="${k}"><span class="box"></span><span class="ref">${k.toUpperCase()}</span><span class="nm">${SRV[k].name}</span></button></li>`).join("")}</ol>
+  </div>`;
+}
+function srvSelect(id){
+  srvScene.select(id);
+  if (!id){ srvIntro(); return; }
+  const S = SRV[id];
+  let action = "";
+  if (id === "psu") action = `<p><button class="btn primary" data-psu>${psuFailed ? "Netzteil 1 wieder einschalten" : "Netzteil 1 ausfallen lassen"}</button></p>
+      ${psuFailed ? `<p class="toast">Netzteil 1 ist aus. Netzteil 2 übernimmt: Der Server läuft weiter.</p>` : ""}`;
+  if (id === "disk") action = `<p><button class="btn primary" data-disk>${$$(".tray.out", srv).length ? "Alle Einschübe zurückschieben" : "Einschub 3 herausziehen"}</button></p>`;
+  srvPanel.innerHTML = `<div class="pane">
+    <p style="margin:0 0 10px"><button class="btn" data-sback>← Übersicht</button></p>
+    <div class="kicker">Server</div>
+    <h2>${S.name}</h2>
+    <p class="lead">${S.text}</p>
+    <p class="note">${S.note}</p>
+    ${action}
+    <hr class="cut">
+    <p class="big">Darum können auf einem Server viele virtuelle Maschinen gleichzeitig laufen.</p>
+  </div>`;
+  if (window.matchMedia("(max-width:900px), (orientation:portrait) and (max-width:1100px)").matches)
+    srvPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+srvPanel.addEventListener("click", e => {
+  const g = e.target.closest("[data-sgo]"); if (g) srvSelect(g.dataset.sgo);
+  if (e.target.closest("[data-sback]")) srvSelect(null);
+  if (e.target.closest("[data-psu]")){ psuFailed = !psuFailed; $('.psu-unit[data-unit="1"]', srv).classList.toggle("failed", psuFailed); srvStatus(); srvSelect("psu"); }
+  if (e.target.closest("[data-disk]")){ const out = $$(".tray.out", srv); if (out.length) out.forEach(t => t.classList.remove("out")); else $('.tray[data-i="2"]', srv).classList.add("out"); srvSelect("disk"); }
+});
+srv.addEventListener("click", e => { if (!e.target.closest(".part")) srvSelect(null); });
+
+/* =====================================================================
+   Modus 2: Quiz
+   ===================================================================== */
+const SITUATIONS = [
+  { q: "Ein Game ruckelt, das Bild kommt nicht nach. Welches Teil ist dafür zuständig?", a: "gpu",
+    exp: "Die Grafikkarte berechnet das Bild für den Bildschirm. Für Games ist sie besonders wichtig." },
+  { q: "Du willst mehr Fotos speichern können. Was brauchst du?", a: "storage",
+    exp: "SSD und Festplatte speichern deine Dateien dauerhaft. Mehr davon heisst mehr Platz für Fotos." },
+  { q: "Nach dem Ausschalten ist es leer. Welcher Speicher ist gemeint?", a: "ram",
+    exp: "Beim Arbeitsspeicher gilt: Strom aus = alles weg. Darum muss man speichern." },
+  { q: "Der PC wird sehr heiss. Welches Teil führt die Wärme weg?", a: "cooler",
+    exp: "Der CPU-Kühler führt die Wärme vom Prozessor weg, wie ein Ventilator im Sommer." },
+  { q: "Der PC hat über das Kabel kein Netzwerk. Welches Teil ist zuständig?", a: "nic",
+    exp: "Die Netzwerkkarte verbindet den PC mit dem Netzwerk. Das Kabel steckt in der RJ45-Buchse." },
+  { q: "Woher bekommen alle Teile ihren Strom?", a: "psu",
+    exp: "Das Netzteil macht aus den 230 Volt aus der Steckdose die kleinen Spannungen für alle Teile." },
+];
+const NAME = id => id === "storage" ? "SSD oder Festplatte" : PARTS[id].name;
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let Q = [], qi = 0, score = 0, answers = [];
+
+function newQuiz(){
+  const ident = shuffle(ORDER).slice(0, 4).map(id => ({ type: "ident", q: "Welches Teil ist das?", a: id,
+    exp: PARTS[id].does }));
+  const sit = SITUATIONS.map(s => ({ type: "sit", ...s }));
+  Q = shuffle([...ident, ...sit]).map(item => {
+    const ex = item.a === "storage" ? ["ssd", "hdd"] : [item.a];
+    const pool = ORDER.filter(k => !ex.includes(k));
+    if (item.type === "ident" && (item.a === "ssd" || item.a === "hdd")) { /* «SSD oder Festplatte» wäre zweideutig – nicht anbieten */ }
+    else if (item.type === "sit" && item.a !== "storage" && Math.random() < .5) pool.push("storage");
+    const opts = shuffle([item.a, ...shuffle(pool.filter(k => k !== "storage" || item.type === "sit")).slice(0, 3)]);
+    return { ...item, opts };
+  });
+  qi = 0; score = 0; answers = []; renderQ();
+}
+
+function qHead(){
+  return `<div class="q-head"><span>FRAGE ${String(qi + 1).padStart(2, "0")} / 10</span>
+    <span class="q-leds">${Q.map((_, i) => `<span class="${answers[i] === true ? "ok" : answers[i] === false ? "bad" : i === qi ? "cur" : ""}"></span>`).join("")}</span>
+    <span>PUNKTE ${score}</span></div>`;
+}
+
+function renderQ(){
+  const it = Q[qi], isId = it.type === "ident";
+  const pad = it.a === "cpu" ? 4 : 5;
+  $("#quiz").innerHTML = qHead() + `
+    <div class="q-card ${isId ? "withfig" : ""} pane">
+      ${isId ? `<figure class="q-fig">${drawing(ARTKEY[it.a], pad)}</figure>` : ""}
+      <div>
+        <div class="kicker">${isId ? "Teil erkennen" : "Situation"}</div>
+        <div class="q-prompt">${it.q}</div>
+        <div class="answers">${it.opts.map((o, i) => `<button class="ans" data-o="${o}"><span class="key">${"ABCD"[i]}</span><span>${NAME(o)}</span></button>`).join("")}</div>
+        <div class="feedback" id="qfb" aria-live="polite"></div>
+        <div class="q-foot"><button class="btn primary" id="qnext" hidden>${qi === 9 ? "Auswertung" : "Weiter"}</button></div>
+      </div>
+    </div>`;
+  $$(".ans").forEach(b => b.addEventListener("click", () => answer(b.dataset.o)));
+  $("#qnext").addEventListener("click", next);
+}
+
+function answer(o){
+  if (answers[qi] !== undefined) return;
+  const it = Q[qi], ok = o === it.a;
+  answers[qi] = ok; if (ok) score++;
+  $$(".ans").forEach(b => { b.disabled = true;
+    if (b.dataset.o === it.a) b.classList.add("right"); else if (b.dataset.o === o) b.classList.add("wrong"); else b.classList.add("dim"); });
+  $("#qfb").innerHTML = ok ? `<span class="verdict ok">RICHTIG.</span>${it.exp}`
+    : `<span class="verdict bad">NICHT GANZ.</span>Richtig ist: <b>${NAME(it.a)}</b>. ${it.exp}`;
+  $(".q-head").outerHTML = qHead();
+  const n = $("#qnext"); n.hidden = false; n.focus({ preventScroll: true });
+}
+
+function next(){ if (qi < 9){ qi++; renderQ(); } else result(); }
+
+function result(){
+  const msg = score === 10 ? "Perfekt! Du kennst die Teile eines PCs." :
+    score >= 7 ? "Sehr gut! Fast alles richtig." :
+    score >= 4 ? "Gut gemacht. Schau dir die Teile im Modus «Entdecken» nochmals an." :
+    "Kein Problem. Schau dir die Teile im Modus «Entdecken» nochmals an und probier es dann nochmal.";
+  $("#quiz").innerHTML = `<div class="q-head"><span>AUSWERTUNG</span><span class="q-leds">${answers.map(a => `<span class="${a ? "ok" : "bad"}"></span>`).join("")}</span><span>PUNKTE ${score}</span></div>
+    <div class="result pane">
+      <div class="kicker">Dein Resultat</div>
+      <div class="score">${score}<small> / 10 Punkte</small></div>
+      <p class="msg">${msg}</p>
+      <ol>${Q.map((it, i) => `<li><i class="${answers[i] ? "ok" : "bad"}"></i><span>${it.type === "ident" ? "Welches Teil ist das?" : it.q} <b>→ ${NAME(it.a)}</b></span></li>`).join("")}</ol>
+      <div class="actions"><button class="btn primary" id="again">Nochmal spielen</button><button class="btn" data-goto2="discover">Zu «Entdecken»</button></div>
+    </div>`;
+  $("#again").addEventListener("click", newQuiz);
+  $("[data-goto2]").addEventListener("click", () => showView("discover"));
+}
+
+document.addEventListener("keydown", e => {
+  if (!$("#view-quiz").classList.contains("active") || e.target.closest("input,textarea")) return;
+  const k = e.key.toUpperCase(), idx = "ABCD".indexOf(k) >= 0 ? "ABCD".indexOf(k) : "1234".indexOf(k);
+  const btns = $$(".ans");
+  if (idx >= 0 && btns[idx] && !btns[idx].disabled) btns[idx].click();
+});
+
+/* =====================================================================
+   Ansichtswechsel
+   ===================================================================== */
+function showView(v){
+  $$(".view").forEach(s => s.classList.toggle("active", s.id === "view-" + v));
+  $$("nav.tabs button").forEach(b => b.classList.toggle("active", b.dataset.view === v));
+  if (v === "quiz" && (!Q.length || answers.length === 10)) newQuiz();
+  window.scrollTo(0, 0);
+  requestAnimationFrame(() => { pcScene.retag(); srvScene.retag(); });
+}
+$$("nav.tabs button").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
+window.addEventListener("resize", () => { pcScene.retag(); srvScene.retag(); });
+
+updateProgress(); renderIntro(); srvIntro(); srvStatus();
+</script>
+</body>
+</html>
